@@ -1,0 +1,26 @@
+package rules;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+
+import com.github.filipt03.aquaristic_validator.model.inference.Trait;
+import com.github.filipt03.aquaristic_validator.model.inference.State;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
+
+import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
+import com.github.filipt03.aquaristic_validator.model.types.StateType;
+import com.github.filipt03.aquaristic_validator.model.types.TraitType;
+import com.github.filipt03.aquaristic_validator.model.types.HazardType;
+import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+
+rule "Penalty: Penalize Physical Injury"
+when
+    $h : Hazard(hazardType == HazardType.PHYSICAL_INJURY, $species : affectedSpecies, $desc : description)
+    not Penalty(penaltyType == PenaltyType.PHYSICAL_INJURY, affectedSpecies == $species)
+then
+    insert(new Penalty(PenaltyType.PHYSICAL_INJURY, $species, 15,
+    "CRITICAL [Physical Injury]: " + $desc + " Recommendation: Change substrate to sand."
+        ));
+    System.out.printf("[%s] Penalty Added: Score decreased by 15.\n", drools.getRule().getName());
+end

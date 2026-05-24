@@ -1,0 +1,29 @@
+package rules;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+
+import com.github.filipt03.aquaristic_validator.model.inference.Trait;
+import com.github.filipt03.aquaristic_validator.model.inference.State;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
+
+import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
+import com.github.filipt03.aquaristic_validator.model.types.StateType;
+import com.github.filipt03.aquaristic_validator.model.types.TraitType;
+import com.github.filipt03.aquaristic_validator.model.types.HazardType;
+import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+
+rule "State: High Bioload Detection"
+when
+    $aq : Aquarium($vol : volumeLiters)
+    $totalLength : Number(doubleValue > $vol) from accumulate(
+        Fish($len : maxAdultLengthCm, $qty : quantity),
+        sum($len * $qty)
+    )
+    not State(stateType == StateType.HIGH_BIOLOAD)
+then
+    insert(new State(StateType.HIGH_BIOLOAD));
+    System.out.printf("[%s] State Generated: HIGH_BIOLOAD. Total fish length (%.2fcm) exceeds volume (%.2fL).\n",
+        drools.getRule().getName(), $totalLength, $vol);
+end

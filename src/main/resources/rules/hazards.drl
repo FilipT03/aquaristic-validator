@@ -1,0 +1,47 @@
+package rules;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+
+import com.github.filipt03.aquaristic_validator.model.inference.Trait;
+import com.github.filipt03.aquaristic_validator.model.inference.State;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
+
+import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
+import com.github.filipt03.aquaristic_validator.model.types.StateType;
+import com.github.filipt03.aquaristic_validator.model.types.TraitType;
+import com.github.filipt03.aquaristic_validator.model.types.HazardType;
+import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+
+// --- LAYER 3: Hazard Detection ---
+
+rule "Hazard: Physical Injury Risk on Bottom"
+when
+    $aq : Aquarium(substrateType == SubstrateType.SHARP_GRAVEL)
+    $t  : Trait(traitType == TraitType.SENSITIVE_BARBELS, $species : fishSpecies)
+    not Hazard(
+        hazardType == HazardType.PHYSICAL_INJURY,
+        affectedSpecies == $species
+    )
+then
+    String desc = $species + " has sensitive barbels and sharp gravel will cause physical injuries and infections.";
+    insert(new Hazard(HazardType.PHYSICAL_INJURY, $species, desc));
+    System.out.printf("[%s] Hazard Detected: PHYSICAL_INJURY for %s\n", drools.getRule().getName(), $species);
+end
+
+rule "Hazard: Overstocking Stress"
+when
+    State(stateType == StateType.HIGH_BIOLOAD)
+
+    not Hazard(hazardType == HazardType.OVERCROWDING)
+then
+    insert(
+        new Hazard(
+            HazardType.OVERCROWDING,
+            "GLOBAL",
+            "Aquarium is overstocked and fish may suffer chronic stress."
+        )
+    );
+    System.out.printf("[%s] Hazard Detected: OVERCROWDING\n", drools.getRule().getName());
+end
