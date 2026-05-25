@@ -1,0 +1,41 @@
+package rules;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+import com.github.filipt03.aquaristic_validator.model.domain.FishData;
+
+import com.github.filipt03.aquaristic_validator.model.inference.Trait;
+import com.github.filipt03.aquaristic_validator.model.inference.State;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
+
+import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
+import com.github.filipt03.aquaristic_validator.model.types.StateType;
+import com.github.filipt03.aquaristic_validator.model.types.TraitType;
+import com.github.filipt03.aquaristic_validator.model.types.HazardType;
+import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+
+global org.slf4j.Logger logger;
+
+rule "Trait: Infer Sensitive Barbels"
+when
+    // TODO: Remove hardcoded family names, use template
+    $f : Fish(family == "Cobitidae" || family == "Callichthyidae", $species : species)
+    not Trait(fishSpecies == $species, traitType == TraitType.SENSITIVE_BARBELS)
+then
+    insert(new Trait($species, TraitType.SENSITIVE_BARBELS));
+    logger.trace("[{}] Inferred Trait: SENSITIVE_BARBELS for {}", drools.getRule().getName(), $species);
+end
+
+rule "Trait: Infer Bottom Dweller"
+when
+    $f : Fish($species : species)
+    $data : FishData(species == $species, ecology contains "benthic" 
+        || ecology contains "demersal" 
+        || ecology contains "benthopelagic"
+    )
+    not Trait(fishSpecies == $species, traitType == TraitType.BOTTOM_DWELLER)
+then
+    insert(new Trait($species, TraitType.BOTTOM_DWELLER));
+    logger.trace("[{}] Inferred Trait: BOTTOM_DWELLER for {}", drools.getRule().getName(), $species);
+end
