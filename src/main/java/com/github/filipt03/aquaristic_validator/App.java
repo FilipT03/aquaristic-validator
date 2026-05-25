@@ -2,17 +2,26 @@ package com.github.filipt03.aquaristic_validator;
 
 import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
 import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+import com.github.filipt03.aquaristic_validator.model.domain.FishData;
 import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
 import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
 
 import java.util.Collection;
+import java.util.List;
 
 import org.kie.api.KieServices;
 import org.kie.api.runtime.KieContainer;
 import org.kie.api.runtime.KieSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 public class App {
+    private static final Logger logger = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) {
+
         KieServices ks = KieServices.Factory.get();
         KieContainer kContainer = ks.getKieClasspathContainer();
         KieSession kSession = kContainer.newKieSession("aquariumKSession");
@@ -22,13 +31,28 @@ public class App {
         Fish kuhliLoach = new Fish(
             "Pangio semicincta", 
             "Cobitidae", 
-            "benthopelagic", 
-            10.0, 
+            7.0, 
             8
+        );
+        FishData kuhliLoachData = new FishData(
+            "Pangio semicincta", 
+            "Pangio", 
+            "Cobitidae",
+            List.of("benthic"),
+            List.of(),
+            List.of("freshwater"),
+            List.of("omnivore"),
+            10.0,
+            null, 
+            null,
+            null, 
+            null
         );
 
         kSession.insert(tank);
         kSession.insert(kuhliLoach);
+        kSession.insert(kuhliLoachData);
+        kSession.setGlobal("logger", logger);
 
         kSession.fireAllRules();
 
@@ -44,10 +68,10 @@ public class App {
             score -= p.getValue();
         }
 
-        System.out.println("Final Score: " + score);
+        logger.info("Final Score: {}", score);
 
         for (Penalty p : penalties) {
-            System.out.println("\t" + p.getMessage());
+            logger.info("\t{}", p.getMessage());
         }
         
         kSession.dispose();

@@ -14,7 +14,7 @@ import com.github.filipt03.aquaristic_validator.model.types.TraitType;
 import com.github.filipt03.aquaristic_validator.model.types.HazardType;
 import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
 
-// --- LAYER 3: Hazard Detection ---
+global org.slf4j.Logger logger;
 
 rule "Hazard: Physical Injury Risk on Bottom"
 when
@@ -27,7 +27,7 @@ when
 then
     String desc = $species + " has sensitive barbels and sharp gravel will cause physical injuries and infections.";
     insert(new Hazard(HazardType.PHYSICAL_INJURY, $species, desc));
-    System.out.printf("[%s] Hazard Detected: PHYSICAL_INJURY for %s\n", drools.getRule().getName(), $species);
+    logger.trace("[{}] Hazard Detected: PHYSICAL_INJURY for {}", drools.getRule().getName(), $species);
 end
 
 rule "Hazard: Overstocking Stress"
@@ -43,5 +43,5 @@ then
             "Aquarium is overstocked and fish may suffer chronic stress."
         )
     );
-    System.out.printf("[%s] Hazard Detected: OVERCROWDING\n", drools.getRule().getName());
+    logger.trace("[{}] Hazard Detected: OVERCROWDING", drools.getRule().getName());
 end

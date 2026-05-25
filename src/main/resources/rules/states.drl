@@ -14,16 +14,18 @@ import com.github.filipt03.aquaristic_validator.model.types.TraitType;
 import com.github.filipt03.aquaristic_validator.model.types.HazardType;
 import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
 
+global org.slf4j.Logger logger;
+
 rule "State: High Bioload Detection"
 when
     $aq : Aquarium($vol : volumeLiters)
     $totalLength : Number(doubleValue > $vol) from accumulate(
-        Fish($len : maxAdultLengthCm, $qty : quantity),
-        sum($len * $qty)
+        Fish($species : species, $qty : quantity)
+        and FishData(species == $species, $len : maxAdultLengthCm),
+        sum(($len == null ? 0.0 : $len) * $qty)
     )
     not State(stateType == StateType.HIGH_BIOLOAD)
 then
     insert(new State(StateType.HIGH_BIOLOAD));
-    System.out.printf("[%s] State Generated: HIGH_BIOLOAD. Total fish length (%.2fcm) exceeds volume (%.2fL).\n",
-        drools.getRule().getName(), $totalLength, $vol);
+    logger.trace("[{}] State Generated: HIGH_BIOLOAD. Total fish length ({}cm) exceeds volume ({}L).", drools.getRule().getName(), $totalLength, $vol);
 end

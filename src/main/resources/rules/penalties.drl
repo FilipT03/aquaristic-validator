@@ -14,13 +14,28 @@ import com.github.filipt03.aquaristic_validator.model.types.TraitType;
 import com.github.filipt03.aquaristic_validator.model.types.HazardType;
 import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
 
+global org.slf4j.Logger logger;
+
 rule "Penalty: Penalize Physical Injury"
 when
     $h : Hazard(hazardType == HazardType.PHYSICAL_INJURY, $species : affectedSpecies, $desc : description)
     not Penalty(penaltyType == PenaltyType.PHYSICAL_INJURY, affectedSpecies == $species)
 then
-    insert(new Penalty(PenaltyType.PHYSICAL_INJURY, $species, 15,
-    "CRITICAL [Physical Injury]: " + $desc + " Recommendation: Change substrate to sand."
-        ));
-    System.out.printf("[%s] Penalty Added: Score decreased by 15.\n", drools.getRule().getName());
+    insert(new Penalty(
+        PenaltyType.PHYSICAL_INJURY, $species, 15,
+        "CRITICAL (Physical Injury): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Overcrowding"
+when
+    $h : Hazard(hazardType == HazardType.OVERCROWDING, $desc : description)
+    not Penalty(penaltyType == PenaltyType.OVERCROWDING)
+then
+    insert(new Penalty(
+        PenaltyType.OVERCROWDING, "GLOBAL", 10,
+        "MAJOR (Overcrowding): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
 end
