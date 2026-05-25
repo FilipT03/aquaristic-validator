@@ -4,6 +4,7 @@ import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
 
 @lombok.Getter
 @lombok.AllArgsConstructor
+@lombok.Builder
 public class Aquarium {
     private double volumeLiters;
     private double lengthCm;

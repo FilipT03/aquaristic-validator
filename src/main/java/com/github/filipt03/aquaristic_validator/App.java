@@ -26,7 +26,13 @@ public class App {
         KieContainer kContainer = ks.getKieClasspathContainer();
         KieSession kSession = kContainer.newKieSession("aquariumKSession");
 
-        Aquarium tank = new Aquarium(60.0, 5, SubstrateType.SHARP_GRAVEL);
+        Aquarium tank = Aquarium.builder()
+            .volumeLiters(60.0)
+            .lengthCm(50.0)
+            .widthCm(15.0)
+            .ageInDays(5)
+            .substrateType(SubstrateType.SHARP_GRAVEL)
+            .build(); 
         
         Fish kuhliLoach = new Fish(
             "Pangio semicincta", 
@@ -34,20 +40,16 @@ public class App {
             7.0, 
             8
         );
-        FishData kuhliLoachData = new FishData(
-            "Pangio semicincta", 
-            "Pangio", 
-            "Cobitidae",
-            List.of("benthic"),
-            List.of(),
-            List.of("freshwater"),
-            List.of("omnivore"),
-            10.0,
-            null, 
-            null,
-            null, 
-            null
-        );
+        FishData kuhliLoachData = FishData.builder()
+            .species("Pangio semicincta")
+            .genus("Pangio")
+            .family("Cobitidae")
+            .ecology(List.of("benthic"))
+            .behaviors(List.of())
+            .habitats(List.of("freshwater"))
+            .diet(List.of("omnivore"))
+            .maxAdultLengthCm(10.0)
+            .build();
 
         kSession.insert(tank);
         kSession.insert(kuhliLoach);
