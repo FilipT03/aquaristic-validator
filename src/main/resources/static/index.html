@@ -15,6 +15,14 @@
 </div>
 
 <section id="tab-validate">
+  <div class="flex gap-2 mb-4">
+  <button onclick="exportFormData()" class="px-3 py-1 bg-gray-700 text-white rounded text-sm">Save Test Data (JSON)</button>
+  <label class="px-3 py-1 bg-gray-700 text-white rounded text-sm cursor-pointer">
+    Load Test Data (JSON)
+    <input type="file" accept="application/json" class="hidden" onchange="importFormData(event)">
+  </label>
+</div>
+
   <div class="grid grid-cols-2 gap-3 mb-3">
     <label>Volume (L) <input id="volumeLiters" type="number" value="60" class="border rounded w-full p-1"></label>
     <label>Length (cm) <input id="lengthCm" type="number" value="50" class="border rounded w-full p-1"></label>
@@ -62,7 +70,15 @@
   <ul id="fishListDisplay" class="mb-4 list-disc pl-5"></ul>
 
   <button onclick="runValidate()" class="px-4 py-2 bg-green-600 text-white rounded mb-4">Run Validation</button>
-  <div id="validateResult" class="bg-white border rounded p-3 whitespace-pre-wrap"></div>
+  <div id="validateResult" class="bg-white border rounded p-4">
+  <div id="scoreDisplay" class="text-3xl font-bold"></div>
+  <div id="verdictDisplay" class="text-lg mb-3"></div>
+  <div id="severityBadges" class="flex gap-2 flex-wrap mb-3 text-sm"></div>
+  <details>
+    <summary class="cursor-pointer font-semibold">Full details</summary>
+    <ul id="messageList" class="list-disc pl-5 mt-2"></ul>
+  </details>
+</div>
 </section>
 
 <section id="tab-support" class="hidden">
@@ -173,9 +189,35 @@ async function runValidate() {
     body: JSON.stringify(buildAquariumRequest())
   });
   const data = await res.json();
-  const el = document.getElementById('validateResult');
-  if (!res.ok) { el.textContent = 'Error: ' + (data.message || res.status); return; }
-  el.textContent = 'Score: ' + data.score + '\n\n' + data.messages.map(m => '- ' + m).join('\n');
+  if (!res.ok) { document.getElementById('scoreDisplay').textContent = 'Error: ' + (data.message || res.status); return; }
+
+  document.getElementById('scoreDisplay').textContent = 'Score: ' + data.score + ' / 100';
+  document.getElementById('scoreDisplay').className = 'text-3xl font-bold ' + scoreColor(data.score);
+  document.getElementById('verdictDisplay').textContent = data.verdict;
+
+  const badges = document.getElementById('severityBadges');
+  badges.innerHTML = '';
+  addBadge(badges, 'Critical', data.issueCounts.critical, 'bg-red-600');
+  addBadge(badges, 'Major', data.issueCounts.major, 'bg-orange-500');
+  addBadge(badges, 'Moderate', data.issueCounts.moderate, 'bg-yellow-500');
+  addBadge(badges, 'Minor', data.issueCounts.minor, 'bg-yellow-300 text-gray-800');
+
+  document.getElementById('messageList').innerHTML = data.messages.map(m => `<li>${m}</li>`).join('');
+}
+
+function addBadge(container, label, count, colorClass) {
+  if (!count) return;
+  const span = document.createElement('span');
+  span.className = colorClass + ' text-white px-2 py-1 rounded-full';
+  span.textContent = count + ' ' + label;
+  container.appendChild(span);
+}
+
+function scoreColor(score) {
+  if (score >= 75) return 'text-green-600';
+  if (score >= 50) return 'text-yellow-600';
+  if (score >= 25) return 'text-orange-600';
+  return 'text-red-600';
 }
 
 async function runSupportCheck() {
@@ -219,6 +261,46 @@ function renderNode(goalKey, tree) {
   });
   details.appendChild(ul);
   return details;
+}
+
+function exportFormData() {
+  const data = buildAquariumRequest();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'aquarium-test-data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importFormData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const data = JSON.parse(await file.text());
+
+  document.getElementById('volumeLiters').value = data.volumeLiters;
+  document.getElementById('lengthCm').value = data.lengthCm;
+  document.getElementById('widthCm').value = data.widthCm;
+  document.getElementById('heightCm').value = data.heightCm;
+  document.getElementById('ageInDays').value = data.ageInDays;
+  document.getElementById('substrateType').value = data.substrateType;
+  document.getElementById('hasCover').checked = data.hasCover;
+  document.getElementById('hasLivePlants').checked = data.hasLivePlants;
+  document.getElementById('hasWoodDecoration').checked = data.hasWoodDecoration;
+  document.getElementById('hidingSpots').value = data.hidingSpots;
+  document.getElementById('ph').value = data.ph;
+  document.getElementById('temperatureC').value = data.temperatureC;
+  document.getElementById('filterModel').value = data.equipment?.filterModel || '';
+  document.getElementById('heaterModel').value = data.equipment?.heaterModel || '';
+  document.getElementById('filterFlowRateLPH').value = data.equipment?.filterFlowRateLPH ?? '';
+  document.getElementById('hasLights').checked = !!data.equipment?.hasLights;
+
+  selectedFish = (data.fish || []).map(f => {
+    const species = allSpecies.find(s => s.speciesId === f.speciesId);
+    return { speciesId: f.speciesId, quantity: f.quantity, label: species ? speciesLabel(species) : ('Species #' + f.speciesId) };
+  });
+  renderFishList();
 }
 
 loadSpecies();

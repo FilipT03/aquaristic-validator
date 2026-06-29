@@ -7,6 +7,8 @@ import com.github.filipt03.aquaristic_validator.model.backward.ProofResultNode;
 import com.github.filipt03.aquaristic_validator.model.backward.SpeciesSupportTree;
 import com.github.filipt03.aquaristic_validator.model.domain.*;
 import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
+import com.github.filipt03.aquaristic_validator.model.types.PenaltySeverity;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
 
 import org.kie.api.KieBase;
 import org.kie.api.io.ResourceType;
@@ -23,6 +25,8 @@ import java.util.stream.Collectors;
 @Service
 public class RuleEngineService {
     private static final Logger logger = LoggerFactory.getLogger(RuleEngineService.class);
+    private static final double DECAY_FACTOR = 0.5;
+    private static final double SCALE_CONSTANT = 60.0;
 
     private final KieBase kieBase;
     private final List<FishData> fishDataList;
@@ -80,23 +84,46 @@ public class RuleEngineService {
 
             List<Penalty> penalties = kSession.getObjects(o -> o instanceof Penalty)
                 .stream().map(o -> (Penalty) o)
-                .sorted((o1, o2) -> {
-                    int cmp = o1.getType().compareTo(o2.getType());
-                    if (cmp != 0) return cmp;
-                    return o1.getValue() - o2.getValue();
-                }).toList();
+                .sorted(Comparator.comparing(Penalty::getType).thenComparing(Penalty::getValue))
+                .toList();
 
-            int score = 100;
-            List<String> messages = new ArrayList<>();
-            for (Penalty p : penalties) {
-                score -= p.getValue();
-                messages.add(p.getMessage());
+            Map<RiskType, List<Penalty>> grouped = penalties.stream()
+                .collect(Collectors.groupingBy(Penalty::getType, LinkedHashMap::new, Collectors.toList()));
+
+            double rawDeduction = 0;
+            Map<PenaltySeverity, Integer> severityCounts = new LinkedHashMap<>(
+                Map.of(PenaltySeverity.CRITICAL, 0, PenaltySeverity.MAJOR, 0, PenaltySeverity.MODERATE, 0, PenaltySeverity.MINOR, 0));
+
+            for (List<Penalty> group : grouped.values()) {
+                List<Penalty> sorted = group.stream()
+                    .sorted(Comparator.comparingInt(Penalty::getValue).reversed())
+                    .toList();
+                for (int i = 0; i < sorted.size(); i++) {
+                    Penalty p = sorted.get(i);
+                    double weight = Math.pow(DECAY_FACTOR, i);
+                    rawDeduction += p.getValue() * weight;
+                    severityCounts.merge(p.getSeverity(), 1, Integer::sum);
+                }
             }
-            if (score < 0) score = 0;
-            return new ValidationResult(score, messages);
+
+            double rawScore = 100.0 * Math.exp(-rawDeduction / SCALE_CONSTANT);
+            int score = (int) Math.round(Math.max(0, Math.min(100, rawScore)));
+
+            List<String> messages = penalties.stream().map(Penalty::getMessage).toList();
+
+            return new ValidationResult(score, verdictFor(score),
+                severityCounts.get(PenaltySeverity.CRITICAL), severityCounts.get(PenaltySeverity.MAJOR),
+                severityCounts.get(PenaltySeverity.MODERATE), severityCounts.get(PenaltySeverity.MINOR), messages);
         } finally {
             kSession.dispose();
         }
+    }
+    private static String verdictFor(int score) {
+        if (score >= 90) return "Excellent - aquarium configuration does not require adjustments.";
+        if (score >= 75) return "Good - minor adjustments recommended.";
+        if (score >= 50) return "Needs improvement - several issues detected.";
+        if (score >= 25) return "Risky - serious issues detected.";
+        return "Not recommended - this combination is likely to harm the fish.";
     }
 
     public Map<String, List<ProofResultNode>> speciesSupport(int speciesId, KieSession kSession) {
@@ -115,5 +142,5 @@ public class RuleEngineService {
         return kSession;
     }
 
-    public record ValidationResult(int score, List<String> messages) {}
+    public record ValidationResult(int score, String verdict, int critical, int major, int moderate, int minor, List<String> messages) {}
 }

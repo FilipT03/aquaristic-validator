@@ -1,5 +1,6 @@
 package com.github.filipt03.aquaristic_validator.model.inference;
 
+import com.github.filipt03.aquaristic_validator.model.types.PenaltySeverity;
 import com.github.filipt03.aquaristic_validator.model.types.RiskType;
 
 @lombok.Getter
@@ -9,4 +10,5 @@ public class Penalty {
     private int affectedSpeciesId;
     private int value;
     private String message;
+    private PenaltySeverity severity;
 }

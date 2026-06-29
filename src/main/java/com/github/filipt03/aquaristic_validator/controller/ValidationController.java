@@ -18,7 +18,9 @@ public class ValidationController {
     @PostMapping("/validate")
     public ValidationResponse validate(@RequestBody AquariumRequest request) {
         var result = engine.validate(request.toAquarium(), request.toFishList(engine.getFishDataList()));
-        return new ValidationResponse(result.score(), result.messages());
+        return new ValidationResponse(result.score(), result.verdict(),
+            new ValidationResponse.SeverityCounts(result.critical(), result.major(), result.moderate(), result.minor()),
+            result.messages());
     }
 
     @GetMapping("/species")
