@@ -5,17 +5,21 @@ import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
 import java.util.List;
 
 public record AquariumRequest(
-    double volumeLiters, double lengthCm, double widthCm, int ageInDays,
-    SubstrateType substrateType, boolean hasCover, boolean hasLivePlants, int hidingSpots,
+    double volumeLiters, double lengthCm, double widthCm, double heightCm, int ageInDays,
+    SubstrateType substrateType, boolean hasCover, boolean hasLivePlants, boolean hasWoodDecoration, int hidingSpots,
     double ph, double temperatureC,
+    EquipmentRequest equipment,
     List<FishRequest> fish
 ) {
     public Aquarium toAquarium() {
         WaterParameters wp = new WaterParameters(ph, temperatureC);
+        Equipment eq = new Equipment(equipment.filterModel(), equipment.heaterModel(),
+                                      equipment.filterFlowRateLPH(), equipment.hasLights());
         return Aquarium.builder()
-            .volumeLiters(volumeLiters).lengthCm(lengthCm).widthCm(widthCm).ageInDays(ageInDays)
-            .substrateType(substrateType).hasCover(hasCover).hasLivePlants(hasLivePlants)
-            .hidingSpots(hidingSpots).waterParameters(wp).build();
+            .volumeLiters(volumeLiters).lengthCm(lengthCm).widthCm(widthCm).heightCm(heightCm)
+            .ageInDays(ageInDays).substrateType(substrateType).hasCover(hasCover)
+            .hasLivePlants(hasLivePlants).hasWoodDecoration(hasWoodDecoration)
+            .hidingSpots(hidingSpots).waterParameters(wp).equipment(eq).build();
     }
 
     public List<Fish> toFishList(List<FishData> fishDataList) {
@@ -24,7 +28,7 @@ public record AquariumRequest(
                 .filter(fd -> fd.getSpeciesId() == fr.speciesId())
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Unknown speciesId " + fr.speciesId()));
-            return new Fish(fr.speciesId(), data.getSpecies(), 0.0, fr.quantity());
+            return new Fish(fr.speciesId(), data.getSpecies(), fr.quantity());
         }).toList();
     }
 }

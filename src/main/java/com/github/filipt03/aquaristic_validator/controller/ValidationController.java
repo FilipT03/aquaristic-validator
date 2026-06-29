@@ -25,4 +25,10 @@ public class ValidationController {
     public List<FishData> species() {
         return engine.getFishDataList();
     }
+
+    @GetMapping("/filters")
+    public List<EquipmentOption> filters() { return engine.getFilterOptions(); }
+
+    @GetMapping("/heaters")
+    public List<EquipmentOption> heaters() { return engine.getHeaterOptions(); }
 }

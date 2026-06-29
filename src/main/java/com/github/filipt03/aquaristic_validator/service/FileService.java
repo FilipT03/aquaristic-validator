@@ -12,6 +12,7 @@ import org.drools.template.ObjectDataCompiler;
 import org.springframework.stereotype.Service;
 
 import com.github.filipt03.aquaristic_validator.App;
+import com.github.filipt03.aquaristic_validator.dto.EquipmentOption;
 import com.github.filipt03.aquaristic_validator.model.domain.FishData;
 
 @Service
@@ -123,5 +124,14 @@ public class FileService {
         if ("1".equals(row.get("Schooling"))) behaviors.add("schooling");
         if ("1".equals(row.get("Shoaling"))) behaviors.add("shoaling");
         return behaviors;
+    }
+
+    public static List<EquipmentOption> loadEquipmentOptions(String csvPath, String modelColumn, String capacityColumn) throws Exception {
+        List<Map<String, String>> rows = parseCsv(csvPath);
+        List<EquipmentOption> options = new ArrayList<>();
+        for (Map<String, String> row : rows) {
+            options.add(new EquipmentOption(row.get(modelColumn), Double.parseDouble(row.get(capacityColumn))));
+        }
+        return options;
     }
 }

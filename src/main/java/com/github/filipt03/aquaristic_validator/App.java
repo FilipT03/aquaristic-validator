@@ -45,8 +45,8 @@ public class App {
 
         KieSession kSession = kieHelper.build().newKieSession();
         
-        WaterParameters waterParameters = new WaterParameters(8.0, 24.0, 10.0);
-        Equipment equipment = new Equipment("AquaClear50", null, 100.0, false, false);
+        WaterParameters waterParameters = new WaterParameters(8.0, 24.0);
+        Equipment equipment = new Equipment("AquaClear50", null, 100.0, false);
         Aquarium tank = Aquarium.builder()
             .volumeLiters(90.0)
             .lengthCm(50.0)
@@ -59,10 +59,10 @@ public class App {
             .hasLivePlants(false)
             .build();
 
-        Fish kuhliLoach = new Fish(1, "Pangio kuhlii", 7.0, 8);
-        Fish africanCichlid = new Fish(30, "Labidochromis caeruleus", 12.0, 2);
-        Fish woodEater = new Fish(13, "Hypostomus plecostomus", 12.0, 2);
-        Fish plantEater = new Fish(14, "Xiphophorus maculatus", 12.0, 2);
+        Fish kuhliLoach = new Fish(1, "Pangio kuhlii", 8);
+        Fish africanCichlid = new Fish(30, "Labidochromis caeruleus", 2);
+        Fish woodEater = new Fish(13, "Hypostomus plecostomus", 2);
+        Fish plantEater = new Fish(14, "Xiphophorus maculatus", 2);
 
         List<GoalRequirement> requirements = SpeciesSupportTree.createGoalTree();
 

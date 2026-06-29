@@ -1,5 +1,6 @@
 package com.github.filipt03.aquaristic_validator.service;
 
+import com.github.filipt03.aquaristic_validator.dto.EquipmentOption;
 import com.github.filipt03.aquaristic_validator.model.backward.GoalRequirement;
 import com.github.filipt03.aquaristic_validator.model.backward.ProofResult;
 import com.github.filipt03.aquaristic_validator.model.backward.ProofResultNode;
@@ -14,10 +15,10 @@ import org.kie.internal.io.ResourceFactory;
 import org.kie.internal.utils.KieHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.rsocket.RSocketProperties.Server.Spec;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class RuleEngineService {
@@ -25,6 +26,8 @@ public class RuleEngineService {
 
     private final KieBase kieBase;
     private final List<FishData> fishDataList;
+    private final List<EquipmentOption> filterOptions;
+    private final List<EquipmentOption> heaterOptions;
     private final List<GoalRequirement> goals;
     private final SpeciesSupportService speciesSupportService;
 
@@ -34,6 +37,8 @@ public class RuleEngineService {
         String filterRules = FileService.compileTemplate("/data/filters.csv", "/rules/templates/filters.drt");
         String heaterRules = FileService.compileTemplate("/data/heaters.csv", "/rules/templates/heaters.drt");
         this.fishDataList  = FileService.loadFishData("/data/species.csv");
+        this.filterOptions = FileService.loadEquipmentOptions("/data/filters.csv", "FilterModel", "MaxSupportedVolumeL");
+        this.heaterOptions = FileService.loadEquipmentOptions("/data/heaters.csv", "HeaterModel", "MaxSupportedVolumeL");
         this.goals         = SpeciesSupportTree.createGoalTree();
 
         KieHelper kieHelper = new KieHelper();
@@ -52,18 +57,34 @@ public class RuleEngineService {
     public List<FishData> getFishDataList() {
         return fishDataList;
     }
+    public List<EquipmentOption> getFilterOptions() { return filterOptions; }
+    public List<EquipmentOption> getHeaterOptions() { return heaterOptions; }
 
     public ValidationResult validate(Aquarium tank, List<Fish> fishes) {
         KieSession kSession = kieBase.newKieSession();
         try {
+            Map<Integer, Fish> condesedFishes = new HashMap<>();
+            for (Fish f : fishes) {
+                if (condesedFishes.containsKey(f.getSpeciesId())) {
+                    Fish existing = condesedFishes.get(f.getSpeciesId());
+                    existing.setQuantity(existing.getQuantity() + f.getQuantity());
+                } else {
+                    condesedFishes.put(f.getSpeciesId(), new Fish(f.getSpeciesId(), f.getSpecies(), f.getQuantity()));
+                }
+            }
             kSession.insert(tank);
-            fishes.forEach(kSession::insert);
+            condesedFishes.values().forEach(kSession::insert);
             fishDataList.forEach(kSession::insert);
             kSession.setGlobal("logger", logger);
             kSession.fireAllRules();
 
             List<Penalty> penalties = kSession.getObjects(o -> o instanceof Penalty)
-                .stream().map(o -> (Penalty) o).toList();
+                .stream().map(o -> (Penalty) o)
+                .sorted((o1, o2) -> {
+                    int cmp = o1.getType().compareTo(o2.getType());
+                    if (cmp != 0) return cmp;
+                    return o1.getValue() - o2.getValue();
+                }).toList();
 
             int score = 100;
             List<String> messages = new ArrayList<>();
@@ -71,6 +92,7 @@ public class RuleEngineService {
                 score -= p.getValue();
                 messages.add(p.getMessage());
             }
+            if (score < 0) score = 0;
             return new ValidationResult(score, messages);
         } finally {
             kSession.dispose();
