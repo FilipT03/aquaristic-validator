@@ -1,5 +1,9 @@
 package com.github.filipt03.aquaristic_validator;
 
+import com.github.filipt03.aquaristic_validator.model.backward.GoalRequirement;
+import com.github.filipt03.aquaristic_validator.model.backward.ProofResult;
+import com.github.filipt03.aquaristic_validator.model.backward.ProofResultNode;
+import com.github.filipt03.aquaristic_validator.model.backward.SpeciesSupportTree;
 import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
 import com.github.filipt03.aquaristic_validator.model.domain.Equipment;
 import com.github.filipt03.aquaristic_validator.model.domain.Fish;
@@ -7,6 +11,7 @@ import com.github.filipt03.aquaristic_validator.model.domain.FishData;
 import com.github.filipt03.aquaristic_validator.model.domain.WaterParameters;
 import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
 import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
+import com.github.filipt03.aquaristic_validator.service.SpeciesSupportService;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -17,6 +22,9 @@ import org.drools.template.ObjectDataCompiler;
 import org.kie.api.event.rule.DefaultAgendaEventListener;
 import org.kie.api.io.ResourceType;
 import org.kie.api.runtime.KieSession;
+import org.kie.api.runtime.rule.QueryResults;
+import org.kie.api.runtime.rule.QueryResultsRow;
+import org.kie.api.runtime.rule.Variable;
 import org.kie.internal.io.ResourceFactory;
 import org.kie.internal.utils.KieHelper;
 import org.slf4j.Logger;
@@ -40,12 +48,12 @@ public class App {
         kieHelper.addResource(ResourceFactory.newClassPathResource("rules/hazards.drl"), ResourceType.DRL);
         kieHelper.addResource(ResourceFactory.newClassPathResource("rules/penalties.drl"), ResourceType.DRL);
         kieHelper.addResource(ResourceFactory.newClassPathResource("rules/states.drl"), ResourceType.DRL);
+        kieHelper.addResource(ResourceFactory.newClassPathResource("rules/backward/species_support.drl"), ResourceType.DRL);
 
         KieSession kSession = kieHelper.build().newKieSession();
-
+        
         WaterParameters waterParameters = new WaterParameters(8.0, 24.0, 10.0);
-        Equipment equipment = new Equipment("AquaClear50", "EheimJager100", 100.0, false, false);
-
+        Equipment equipment = new Equipment("AquaClear50", null, 100.0, false, false);
         Aquarium tank = Aquarium.builder()
             .volumeLiters(90.0)
             .lengthCm(50.0)
@@ -55,19 +63,53 @@ public class App {
             .substrateType(SubstrateType.SHARP_GRAVEL)
             .waterParameters(waterParameters)
             .equipment(equipment)
+            .hasLivePlants(false)
             .build();
 
         Fish kuhliLoach = new Fish(1, "Pangio kuhlii", 7.0, 8);
+        Fish africanCichlid = new Fish(30, "Labidochromis caeruleus", 12.0, 2);
+        Fish woodEater = new Fish(13, "Hypostomus plecostomus", 12.0, 2);
+        Fish plantEater = new Fish(14, "Xiphophorus maculatus", 12.0, 2);
+
+        List<GoalRequirement> requirements = SpeciesSupportTree.createGoalTree();
 
         kSession.insert(tank);
         kSession.insert(kuhliLoach);
+        kSession.insert(africanCichlid);
+        kSession.insert(woodEater);
+        kSession.insert(plantEater);
         fishDataList.forEach(kSession::insert);
+        requirements.forEach(kSession::insert);
         kSession.setGlobal("logger", logger);
 
-        kSession.addEventListener(new DefaultAgendaEventListener() 
-        );
         kSession.fireAllRules();
 
+        SpeciesSupportService supportService = new SpeciesSupportService();
+        ProofResult proof = supportService.isSupported(kSession, africanCichlid.getSpeciesId());
+        logger.info("SPECIES_SUPPORTED for {}: {}", africanCichlid.getSpecies(), proof.satisfied);
+        for (Map.Entry<String, List<ProofResultNode>> entry : proof.tree.entrySet()) {
+            logger.info("\t{}", entry.getKey());
+            for (ProofResultNode node : entry.getValue()) {
+                logger.info("\t\t{}: {}", node.getChild(), node.getExplanation());
+            }
+        }
+        proof = supportService.isSupported(kSession, woodEater.getSpeciesId());
+        logger.info("SPECIES_SUPPORTED for {}: {}", woodEater.getSpecies(), proof.satisfied);
+        
+        for (Map.Entry<String, List<ProofResultNode>> entry : proof.tree.entrySet()) {
+            logger.info("\t{}", entry.getKey());
+            for (ProofResultNode node : entry.getValue()) {
+                logger.info("\t\t{}: {}", node.getChild(), node.getExplanation());
+            }
+        }proof = supportService.isSupported(kSession, plantEater.getSpeciesId());
+        logger.info("SPECIES_SUPPORTED for {}: {}", plantEater.getSpecies(), proof.satisfied);
+        
+        for (Map.Entry<String, List<ProofResultNode>> entry : proof.tree.entrySet()) {
+            logger.info("\t{}", entry.getKey());
+            for (ProofResultNode node : entry.getValue()) {
+                logger.info("\t\t{}: {}", node.getChild(), node.getExplanation());
+            }
+        }
         Collection<Penalty> penalties = kSession
             .getObjects(obj -> obj instanceof Penalty)
             .stream()
@@ -76,6 +118,7 @@ public class App {
 
         int score = 100;
         for (Penalty p : penalties) score -= p.getValue();
+        if (score < 0) score = 0;
 
         logger.info("Final Score: {}", score);
         for (Penalty p : penalties) logger.info("\t{}", p.getMessage());
@@ -109,6 +152,7 @@ public class App {
                 .minGroupSize(parseIntOrNull(row.get("MinGroupSize")))
                 .aggressionLevel(parseIntOrNull(row.get("AggressionLevel")))
                 .tropical("1".equals(row.getOrDefault("Tropical", "0").trim()))
+                .diet(toListIfPresent(row.get("Diet")))
                 .build();
 
             result.add(data);
@@ -124,7 +168,8 @@ public class App {
     }
 
     private static List<String> toListIfPresent(String value) {
-        return (value == null || value.isBlank()) ? List.of() : List.of(value.trim());
+        if (value == null || value.isBlank()) return List.of();
+        return List.of(value.split("[;]")).stream().map(String::trim).filter(s -> !s.isEmpty()).toList();
     }
 
     private static Double parseDoubleOrNull(String value) {
@@ -160,13 +205,13 @@ public class App {
 
             List<Map<String, String>> dataList = new ArrayList<>();
             String headerLine = reader.readLine().replace("\uFEFF", "");
-            String[] headers = headerLine.split("[,;]");
+            String[] headers = headerLine.split("[,]");
 
             String line;
             while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty() || line.split("[,;]").length < 2) continue;
+                if (line.trim().isEmpty() || line.split("[,]").length < 2) continue;
 
-                String[] cols = line.split("[,;]", -1);
+                String[] cols = line.split("[,]", -1);
                 Map<String, String> row = new HashMap<>();
                 for (int i = 0; i < headers.length && i < cols.length; i++) {
                     row.put(headers[i].trim(), cols[i].trim());

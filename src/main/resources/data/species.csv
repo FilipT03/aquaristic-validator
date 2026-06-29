@@ -1,25 +1,25 @@
-﻿SpeciesId,Genus,Species,CommonName,CommonNameSR,DemersPelag,AirBreathing,Length,Family,FoodTroph,Schooling,Shoaling,MinGroupSize,AggressionLevel,Tropical,Territorial
-5,Paracheirodon,innesi,Neon Tetra,Neon tetra,pelagic,WaterAssumed,2.22,Acestrorhamphidae,2.92,0,0,6,1,1,0
-9,Gymnocorymbus,ternetzi,Black Skirt Tetra,Crna tetra,pelagic,WaterAssumed,7.5,Acestrorhamphidae,3.12,0,0,6,2,1,0
-28,Hyphessobrycon,amandae,Ember Tetra,Ember tetra,benthopelagic,WaterAssumed,2.03,Acestrorhamphidae,0.0,0,0,6,1,1,0
-6,Corydoras,paleatus,Peppered Corydoras,Pegavi koridoras,demersal,Facultative,6.6,Callichthyidae,2.94,0,0,6,1,1,0
-26,Corydoras,panda,Panda Corydoras,Panda koridoras,demersal,Facultative,3.8,Callichthyidae,0.0,0,0,6,1,1,0
-19,Pterophyllum,scalare,Angelfish,Skalar,benthopelagic,WaterAssumed,10.5,Cichlidae,3.6,0,0,1,5,1,1
-30,Labidochromis,caeruleus,African Yellow Cichlid,Africki zuti ciklid,benthopelagic,WaterAssumed,8.1,Cichlidae,0.0,0,0,4,6,1,1
-1,Pangio,kuhlii,Kuhli Loach,Kuli kuli,demersal,Facultative,12.0,Cobitidae,0.0,0,0,6,1,1,0
-17,Puntigrus,tetrazona,Tiger Barb,Barbus tetrazona,benthopelagic,WaterAssumed,7.0,Cyprinidae,2.87,0,0,6,5,1,0
-29,Carassius,auratus,Yellow Cap Oranda,Zlatna ribica,benthopelagic,WaterAssumed,48.0,Cyprinidae,2.86,0,0,1,1,0,0
-7,Danio,rerio,Zebra Danio,Zebrica,benthopelagic,WaterAssumed,3.8,Danionidae,3.21,0,0,6,1,1,0
-18,Trigonostigma,espei,Espei Rasbora,Espei razbora,benthopelagic,WaterAssumed,2.5,Danionidae,0.0,0,0,6,1,1,0
-12,Sewellia,lineolata,Reticulated Hillstream Loach,Kamena riba,demersal,WaterAssumed,5.66,Gastromyzontidae,2.72,0,0,3,2,1,1
-11,Gyrinocheilus,aymonieri,Chinese Algae Eater,Kineski algojed,demersal,WaterAssumed,28.0,Gyrinocheilidae,2.52,0,0,1,8,1,1
-13,Hypostomus,plecostomus,Common Pleco,Pleko,demersal,Facultative,24.98,Loricariidae,2.5,0,0,1,2,1,1
-23,Otocinclus,affinis,Otocinclus,Otocinklus,demersal,FacultativeGenus,5.0,Loricariidae,2.0,0,0,6,1,1,0
-25,Ancistrus,cirrhosus,Bristlenose Pleco,Ancistrus,demersal,FacultativeObligate,8.9,Loricariidae,2.0,0,0,1,2,1,1
-8,Betta,splendens,Siamese Fighting Fish,Sijamski borac,benthopelagic,Facultative,6.5,Osphronemidae,3.25,0,0,1,9,1,1
-10,Trichogaster,lalius,Dwarf Gourami,Patuljasta colisa,benthopelagic,Facultative,9.5,Osphronemidae,0.0,0,0,1,4,1,1
-32,Macropodus,opercularis,Paradise Fish,Rajska riba,pelagic,Obligate,6.7,Osphronemidae,3.78,0,0,1,8,0,1
-14,Xiphophorus,maculatus,Platy,Platika,benthopelagic,WaterAssumed,4.0,Poeciliidae,3.2,0,0,3,1,1,0
-15,Poecilia,reticulata,Guppy,Gupi,benthopelagic,WaterAssumed,5.0,Poeciliidae,3.2,0,0,3,1,1,0
-16,Poecilia,latipinna,Molly,Molly,benthopelagic,WaterAssumed,15.0,Poeciliidae,2.0,0,0,3,2,1,0
-21,Xiphophorus,hellerii,Swordtail,Ksifo,benthopelagic,WaterAssumed,14.0,Poeciliidae,3.19,0,0,3,3,1,0
+﻿SpeciesId,Genus,Species,CommonName,CommonNameSR,DemersPelag,AirBreathing,Length,Family,FoodTroph,Schooling,Shoaling,MinGroupSize,AggressionLevel,Tropical,Territorial,Diet
+5,Paracheirodon,innesi,Neon Tetra,Neon tetra,pelagic,WaterAssumed,2.22,Acestrorhamphidae,2.92,0,0,6,1,1,0,insects;zooplankton
+9,Gymnocorymbus,ternetzi,Black Skirt Tetra,Crna tetra,pelagic,WaterAssumed,7.5,Acestrorhamphidae,3.12,0,0,6,2,1,0,insects
+28,Hyphessobrycon,amandae,Ember Tetra,Ember tetra,benthopelagic,WaterAssumed,2.03,Acestrorhamphidae,0.0,0,0,6,1,1,0,micro-crustaceans;zooplankton
+6,Corydoras,paleatus,Peppered Corydoras,Pegavi koridoras,demersal,Facultative,6.6,Callichthyidae,2.94,0,0,6,1,1,0,worms;insects
+26,Corydoras,panda,Panda Corydoras,Panda koridoras,demersal,Facultative,3.8,Callichthyidae,0.0,0,0,6,1,1,0,worms;insects
+19,Pterophyllum,scalare,Angelfish,Skalar,benthopelagic,WaterAssumed,10.5,Cichlidae,3.6,0,0,1,5,1,1,crustaceans;small fish
+30,Labidochromis,caeruleus,African Yellow Cichlid,Africki zuti ciklid,benthopelagic,WaterAssumed,8.1,Cichlidae,0.0,0,0,4,6,1,1,snails;crustaceans;insects
+1,Pangio,kuhlii,Kuhli Loach,Kuli kuli,demersal,Facultative,12.0,Cobitidae,0.0,0,0,6,1,1,0,worms;insect larvae
+17,Puntigrus,tetrazona,Tiger Barb,Barbus tetrazona,benthopelagic,WaterAssumed,7.0,Cyprinidae,2.87,0,0,6,5,1,0,plant matter;insects
+29,Carassius,auratus,Yellow Cap Oranda,Zlatna ribica,benthopelagic,WaterAssumed,48.0,Cyprinidae,2.86,0,0,1,1,0,0,plant matter;algae
+7,Danio,rerio,Zebra Danio,Zebrica,benthopelagic,WaterAssumed,3.8,Danionidae,3.21,0,0,6,1,1,0,insects
+18,Trigonostigma,espei,Espei Rasbora,Espei razbora,benthopelagic,WaterAssumed,2.5,Danionidae,0.0,0,0,6,1,1,0,micro-crustaceans;insects
+12,Sewellia,lineolata,Reticulated Hillstream Loach,Kamena riba,demersal,WaterAssumed,5.66,Gastromyzontidae,2.72,0,0,3,2,1,1,biofilm;algae
+11,Gyrinocheilus,aymonieri,Chinese Algae Eater,Kineski algojed,demersal,WaterAssumed,28.0,Gyrinocheilidae,2.52,0,0,1,8,1,1,algae
+13,Hypostomus,plecostomus,Common Pleco,Pleko,demersal,Facultative,24.98,Loricariidae,2.5,0,0,1,2,1,1,wood;algae
+23,Otocinclus,affinis,Otocinclus,Otocinklus,demersal,FacultativeGenus,5.0,Loricariidae,2.0,0,0,6,1,1,0,algae;biofilm
+25,Ancistrus,cirrhosus,Bristlenose Pleco,Ancistrus,demersal,FacultativeObligate,8.9,Loricariidae,2.0,0,0,1,2,1,1,wood;algae
+8,Betta,splendens,Siamese Fighting Fish,Sijamski borac,benthopelagic,Facultative,6.5,Osphronemidae,3.25,0,0,1,9,1,1,insects;insect larvae
+10,Trichogaster,lalius,Dwarf Gourami,Patuljasta colisa,benthopelagic,Facultative,9.5,Osphronemidae,0.0,0,0,1,4,1,1,insects;algae
+32,Macropodus,opercularis,Paradise Fish,Rajska riba,pelagic,Obligate,6.7,Osphronemidae,3.78,0,0,1,8,0,1,insects;snails
+14,Xiphophorus,maculatus,Platy,Platika,benthopelagic,WaterAssumed,4.0,Poeciliidae,3.2,0,0,3,1,1,0,algae;plant matter
+15,Poecilia,reticulata,Guppy,Gupi,benthopelagic,WaterAssumed,5.0,Poeciliidae,3.2,0,0,3,1,1,0,insects;algae
+16,Poecilia,latipinna,Molly,Molly,benthopelagic,WaterAssumed,15.0,Poeciliidae,2.0,0,0,3,2,1,0,algae;plant matter
+21,Xiphophorus,hellerii,Swordtail,Ksifo,benthopelagic,WaterAssumed,14.0,Poeciliidae,3.19,0,0,3,3,1,0,algae;plant matter
