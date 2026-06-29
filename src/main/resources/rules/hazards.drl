@@ -11,8 +11,7 @@ import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
 import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
 import com.github.filipt03.aquaristic_validator.model.types.StateType;
 import com.github.filipt03.aquaristic_validator.model.types.TraitType;
-import com.github.filipt03.aquaristic_validator.model.types.HazardType;
-import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
 
 global org.slf4j.Logger logger;
 
@@ -22,12 +21,12 @@ when
     $t  : Trait(traitType == TraitType.SENSITIVE_BARBELS, $speciesId : speciesId)
     $f  : Fish(speciesId == $speciesId)
     not Hazard(
-        hazardType == HazardType.PHYSICAL_INJURY,
+        type == RiskType.PHYSICAL_INJURY,
         affectedSpeciesId == $speciesId
     )
 then
     String desc = $f.getSpecies() + " has sensitive barbels and sharp gravel will cause physical injuries and infections.";
-    insert(new Hazard(HazardType.PHYSICAL_INJURY, $speciesId, desc));
+    insert(new Hazard(RiskType.PHYSICAL_INJURY, $speciesId, desc));
     logger.trace("[{}] Hazard Detected: PHYSICAL_INJURY for {}", drools.getRule().getName(), $f.getSpecies());
 end
 
@@ -35,11 +34,11 @@ rule "Hazard: Overstocking Stress"
 when
     State(stateType == StateType.HIGH_BIOLOAD)
 
-    not Hazard(hazardType == HazardType.OVERCROWDING)
+    not Hazard(type == RiskType.OVERCROWDING)
 then
     insert(
         new Hazard(
-            HazardType.OVERCROWDING,
+            RiskType.OVERCROWDING,
             -1,
             "Aquarium is overstocked and fish may suffer chronic stress."
         )

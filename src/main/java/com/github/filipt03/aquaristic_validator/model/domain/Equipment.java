@@ -6,8 +6,8 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public class Equipment {
-    private double filterFlowRateLpH; // Liters per hour
-    private double heaterPowerW;      // Watts
+    private String filterModel;
+    private String heaterModel;
     private boolean hasAirPump;
     private boolean hasLights;
 }

@@ -1,6 +1,7 @@
 package com.github.filipt03.aquaristic_validator;
 
 import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Equipment;
 import com.github.filipt03.aquaristic_validator.model.domain.Fish;
 import com.github.filipt03.aquaristic_validator.model.domain.FishData;
 import com.github.filipt03.aquaristic_validator.model.domain.WaterParameters;
@@ -27,10 +28,14 @@ public class App {
     public static void main(String[] args) throws Exception {
 
         String waterRules = compileTemplate("/data/water_parameters.csv", "/rules/templates/water_parameters.drt");
+        String filterRules = compileTemplate("/data/filters.csv", "/rules/templates/filters.drt");
+        String heaterRules = compileTemplate("/data/heaters.csv", "/rules/templates/heaters.drt");
         List<FishData> fishDataList = loadFishData("/data/species.csv");
 
         KieHelper kieHelper = new KieHelper();
         kieHelper.addContent(waterRules, ResourceType.DRL);
+        kieHelper.addContent(filterRules, ResourceType.DRL);
+        kieHelper.addContent(heaterRules, ResourceType.DRL);
         kieHelper.addResource(ResourceFactory.newClassPathResource("rules/traits.drl"), ResourceType.DRL);
         kieHelper.addResource(ResourceFactory.newClassPathResource("rules/hazards.drl"), ResourceType.DRL);
         kieHelper.addResource(ResourceFactory.newClassPathResource("rules/penalties.drl"), ResourceType.DRL);
@@ -39,14 +44,17 @@ public class App {
         KieSession kSession = kieHelper.build().newKieSession();
 
         WaterParameters waterParameters = new WaterParameters(8.0, 24.0, 10.0);
+        Equipment equipment = new Equipment("AquaClear50", "EheimJager100", false, false);
 
         Aquarium tank = Aquarium.builder()
-            .volumeLiters(60.0)
+            .volumeLiters(90.0)
             .lengthCm(50.0)
             .widthCm(15.0)
+            .heightCm(140.0)
             .ageInDays(5)
             .substrateType(SubstrateType.SHARP_GRAVEL)
             .waterParameters(waterParameters)
+            .equipment(equipment)
             .build();
 
         Fish kuhliLoach = new Fish(1, "Pangio kuhlii", 7.0, 8);

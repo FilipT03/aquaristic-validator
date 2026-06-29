@@ -12,18 +12,17 @@ import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
 import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
 import com.github.filipt03.aquaristic_validator.model.types.StateType;
 import com.github.filipt03.aquaristic_validator.model.types.TraitType;
-import com.github.filipt03.aquaristic_validator.model.types.HazardType;
-import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
 
 global org.slf4j.Logger logger;
 
 rule "Penalty: Penalize Physical Injury"
 when
-    $h : Hazard(hazardType == HazardType.PHYSICAL_INJURY, $speciesId : affectedSpeciesId, $desc : description)
-    not Penalty(penaltyType == PenaltyType.PHYSICAL_INJURY, affectedSpeciesId == $speciesId)
+    $h : Hazard(type == RiskType.PHYSICAL_INJURY, $speciesId : affectedSpeciesId, $desc : description)
+    not Penalty(type == RiskType.PHYSICAL_INJURY, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.PHYSICAL_INJURY, $speciesId, 15,
+        RiskType.PHYSICAL_INJURY, $speciesId, 15,
         "CRITICAL (Physical Injury): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());
@@ -31,26 +30,53 @@ end
 
 rule "Penalty: Penalize Overcrowding"
 when
-    $h : Hazard(hazardType == HazardType.OVERCROWDING, $desc : description)
-    not Penalty(penaltyType == PenaltyType.OVERCROWDING, affectedSpeciesId == -1)
+    $h : Hazard(type == RiskType.OVERCROWDING, $desc : description)
+    not Penalty(type == RiskType.OVERCROWDING, affectedSpeciesId == -1)
 then
     insert(new Penalty(
-        PenaltyType.OVERCROWDING, -1, 10,
+        RiskType.OVERCROWDING, -1, 10,
         "MAJOR (Overcrowding): " + $desc
     ));
+    logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Undersized Filter Volume"
+when
+    $h : Hazard(type == RiskType.UNDERSIZED_FILTER_VOLUME, $desc : description)
+    not Penalty(type == RiskType.UNDERSIZED_FILTER_VOLUME)
+then
+    insert(new Penalty(RiskType.UNDERSIZED_FILTER_VOLUME, -1, 10, "MAJOR (Undersized Filter Volume): " + $desc));
+    logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Undersized Filter Height"
+when
+    $h : Hazard(type == RiskType.UNDERSIZED_FILTER_HEIGHT, $desc : description)
+    not Penalty(type == RiskType.UNDERSIZED_FILTER_HEIGHT)
+then
+    insert(new Penalty(RiskType.UNDERSIZED_FILTER_HEIGHT, -1, 10, "MAJOR (Undersized Filter Height): " + $desc));
+    logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Undersized Heater"
+when
+    $h : Hazard(type == RiskType.UNDERSIZED_HEATER_VOLUME, $desc : description)
+    not Penalty(type == RiskType.UNDERSIZED_HEATER_VOLUME)
+then
+    insert(new Penalty(RiskType.UNDERSIZED_HEATER_VOLUME, -1, 10, "MAJOR (Undersized Heater): " + $desc));
     logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
 end
 
 rule "Penalty: Penalize Wrong pH Minor"
 when
     $h : Hazard(
-        hazardType == HazardType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        type == RiskType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
         $severity > 0, $severity <= 0.5
     )
-    not Penalty(penaltyType == PenaltyType.WRONG_PH, affectedSpeciesId == $speciesId)
+    not Penalty(type == RiskType.WRONG_PH, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.WRONG_PH, $speciesId, 3,
+        RiskType.WRONG_PH, $speciesId, 3,
         "MINOR (pH wrong by " + $severity + "): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 3.", drools.getRule().getName());
@@ -59,13 +85,13 @@ end
 rule "Penalty: Penalize Wrong pH Moderate"
 when
     $h : Hazard(
-        hazardType == HazardType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        type == RiskType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
         $severity > 0.5, $severity <= 1.0
     )
-    not Penalty(penaltyType == PenaltyType.WRONG_PH, affectedSpeciesId == $speciesId)
+    not Penalty(type == RiskType.WRONG_PH, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.WRONG_PH, $speciesId, 6,
+        RiskType.WRONG_PH, $speciesId, 6,
         "MODERATE (pH wrong by " + $severity + "): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 6.", drools.getRule().getName());
@@ -74,13 +100,13 @@ end
 rule "Penalty: Penalize Wrong pH Major"
 when
     $h : Hazard(
-        hazardType == HazardType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        type == RiskType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
         $severity > 1.0, $severity <= 2.0
     )
-    not Penalty(penaltyType == PenaltyType.WRONG_PH, affectedSpeciesId == $speciesId)
+    not Penalty(type == RiskType.WRONG_PH, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.WRONG_PH, $speciesId, 9,
+        RiskType.WRONG_PH, $speciesId, 9,
         "MAJOR (pH wrong by " + $severity + "): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 9.", drools.getRule().getName());
@@ -89,13 +115,13 @@ end
 rule "Penalty: Penalize Wrong pH Critical"
 when
     $h : Hazard(
-        hazardType == HazardType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        type == RiskType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
         $severity > 2.0
     )
-    not Penalty(penaltyType == PenaltyType.WRONG_PH, affectedSpeciesId == $speciesId)
+    not Penalty(type == RiskType.WRONG_PH, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.WRONG_PH, $speciesId, 15,
+        RiskType.WRONG_PH, $speciesId, 15,
         "CRITICAL (pH wrong by " + $severity + "): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());
@@ -104,13 +130,13 @@ end
 rule "Penalty: Penalize Wrong Temperature Minor"
 when
     $h : Hazard(
-        hazardType == HazardType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        type == RiskType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
         $severity > 0, $severity <= 2.0
     )
-    not Penalty(penaltyType == PenaltyType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+    not Penalty(type == RiskType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.WRONG_TEMPERATURE, $speciesId, 3,
+        RiskType.WRONG_TEMPERATURE, $speciesId, 3,
         "MINOR (Temperature wrong by " + $severity + "): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 3.", drools.getRule().getName());
@@ -119,13 +145,13 @@ end
 rule "Penalty: Penalize Wrong Temperature Moderate"
 when
     $h : Hazard(
-        hazardType == HazardType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        type == RiskType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
         $severity > 2.0, $severity <= 4.0
     )
-    not Penalty(penaltyType == PenaltyType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+    not Penalty(type == RiskType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.WRONG_TEMPERATURE, $speciesId, 6,
+        RiskType.WRONG_TEMPERATURE, $speciesId, 6,
         "MODERATE (Temperature wrong by " + $severity + "): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 6.", drools.getRule().getName());
@@ -134,13 +160,13 @@ end
 rule "Penalty: Penalize Wrong Temperature Major"
 when
     $h : Hazard(
-        hazardType == HazardType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        type == RiskType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
         $severity > 4.0, $severity <= 6.0
     )
-    not Penalty(penaltyType == PenaltyType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+    not Penalty(type == RiskType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.WRONG_TEMPERATURE, $speciesId, 9,
+        RiskType.WRONG_TEMPERATURE, $speciesId, 9,
         "MAJOR (Temperature wrong by " + $severity + "): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 9.", drools.getRule().getName());
@@ -149,13 +175,13 @@ end
 rule "Penalty: Penalize Wrong Temperature Critical"
 when
     $h : Hazard(
-        hazardType == HazardType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        type == RiskType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
         $severity > 6.0
     )
-    not Penalty(penaltyType == PenaltyType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+    not Penalty(type == RiskType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.WRONG_TEMPERATURE, $speciesId, 15,
+        RiskType.WRONG_TEMPERATURE, $speciesId, 15,
         "CRITICAL (Temperature wrong by " + $severity + "): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());

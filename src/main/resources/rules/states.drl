@@ -12,8 +12,7 @@ import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
 import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
 import com.github.filipt03.aquaristic_validator.model.types.StateType;
 import com.github.filipt03.aquaristic_validator.model.types.TraitType;
-import com.github.filipt03.aquaristic_validator.model.types.HazardType;
-import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
 
 global org.slf4j.Logger logger;
 
