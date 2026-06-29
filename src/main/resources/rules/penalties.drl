@@ -31,13 +31,78 @@ end
 rule "Penalty: Penalize Overcrowding"
 when
     $h : Hazard(type == RiskType.OVERCROWDING, $desc : description)
-    not Penalty(type == RiskType.OVERCROWDING, affectedSpeciesId == -1)
+    not Penalty(type == RiskType.OVERCROWDING)
 then
     insert(new Penalty(
         RiskType.OVERCROWDING, -1, 10,
         "MAJOR (Overcrowding): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Predation Risk"
+when
+    $h : Hazard(type == RiskType.PREDATION, $speciesId : affectedSpeciesId, $desc : description)
+    not Penalty(type == RiskType.PREDATION, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(RiskType.PREDATION, $speciesId, 30, "CRITICAL (Predation Risk): " + $desc));
+    logger.trace("[{}] Penalty Added: Score decreased by 30.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Toxic Free Ammonia"
+when
+    $h : Hazard(type == RiskType.TOXIC_FREE_AMMONIA, $desc : description)
+    not Penalty(type == RiskType.TOXIC_FREE_AMMONIA)
+then
+    insert(new Penalty(RiskType.TOXIC_FREE_AMMONIA, -1, 40, "CRITICAL - HIGH RISK SYSTEM (Toxic Ammonia): " + $desc));
+    logger.trace("[{}] Penalty Added: Score decreased by 40.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Social Stress"
+when
+    $h : Hazard(type == RiskType.SOCIAL_STRESS, $speciesId : affectedSpeciesId, $desc : description)
+    not Penalty(type == RiskType.SOCIAL_STRESS, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(RiskType.SOCIAL_STRESS, $speciesId, 10, "MAJOR (Social Stress): " + $desc));
+    logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Weak Filtration"
+when
+    State(stateType == StateType.WEAK_FILTRATION)
+    not Penalty(type == RiskType.WEAK_FILTRATION)
+then
+    insert(new Penalty(RiskType.WEAK_FILTRATION, -1, 15,
+        "MAJOR (Weak Filtration): Filter turnover is below the recommended 3x tank volume per hour."));
+    logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Escape Risk"
+when
+    $h : Hazard(type == RiskType.ESCAPE_RISK, $speciesId : affectedSpeciesId, $desc : description)
+    not Penalty(type == RiskType.ESCAPE_RISK, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(RiskType.ESCAPE_RISK, $speciesId, 10, "MAJOR (Escape Risk): " + $desc));
+    logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Territorial Conflict"
+when
+    $h : Hazard(type == RiskType.TERRITORIAL_CONFLICT, $speciesId : affectedSpeciesId, $desc : description)
+    not Penalty(type == RiskType.TERRITORIAL_CONFLICT, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(RiskType.TERRITORIAL_CONFLICT, $speciesId, 10, "MAJOR (Territorial Conflict): " + $desc));
+    logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Missing Heater"
+when
+    State(stateType == StateType.MISSING_HEATER, $speciesId : causingSpeciesId)
+    not Penalty(type == RiskType.MISSING_HEATER, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(RiskType.MISSING_HEATER, $speciesId, 15,
+        "MAJOR (Missing Heater): Tropical species present without a heater installed."));
+    logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());
 end
 
 rule "Penalty: Penalize Undersized Filter Volume"

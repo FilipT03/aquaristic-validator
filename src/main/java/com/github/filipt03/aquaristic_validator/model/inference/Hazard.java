@@ -14,6 +14,6 @@ public class Hazard {
         this.type = type;
         this.affectedSpeciesId = affectedSpeciesId;
         this.description = description;
-        this.severity = 0;
+        this.severity = 1;
     }
 }

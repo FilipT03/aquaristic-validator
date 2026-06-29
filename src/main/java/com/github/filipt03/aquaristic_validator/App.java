@@ -44,7 +44,7 @@ public class App {
         KieSession kSession = kieHelper.build().newKieSession();
 
         WaterParameters waterParameters = new WaterParameters(8.0, 24.0, 10.0);
-        Equipment equipment = new Equipment("AquaClear50", "EheimJager100", false, false);
+        Equipment equipment = new Equipment("AquaClear50", "EheimJager100", 100.0, false, false);
 
         Aquarium tank = Aquarium.builder()
             .volumeLiters(90.0)
@@ -106,8 +106,9 @@ public class App {
                 .diet(List.of())
                 .maxAdultLengthCm(parseDoubleOrNull(row.get("Length")))
                 .trophicLevel(parseDoubleOrNull(row.get("FoodTroph")))
-                .minGroupSize(null)
-                .aggressionLevel(null)
+                .minGroupSize(parseIntOrNull(row.get("MinGroupSize")))
+                .aggressionLevel(parseIntOrNull(row.get("AggressionLevel")))
+                .tropical("1".equals(row.getOrDefault("Tropical", "0").trim()))
                 .build();
 
             result.add(data);
@@ -141,6 +142,15 @@ public class App {
             return Integer.parseInt(value.trim());
         } catch (NumberFormatException e) {
             return defaultValue;
+        }
+    }
+
+    private static Integer parseIntOrNull(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 

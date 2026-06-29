@@ -20,12 +20,60 @@ rule "State: High Bioload Detection"
 when
     $aq : Aquarium($vol : volumeLiters)
     $totalLength : Number(doubleValue > $vol) from accumulate(
-        Fish($species : species, $qty : quantity)
-        and FishData(species == $species, maxAdultLengthCm != null, $len : maxAdultLengthCm),
+        Fish($qty : quantity, $id : speciesId)
+        and FishData(speciesId == $id, maxAdultLengthCm != null, $len : maxAdultLengthCm),
         sum($len * $qty)
     )
     not State(stateType == StateType.HIGH_BIOLOAD)
 then
     insert(new State(StateType.HIGH_BIOLOAD));
     logger.trace("[{}] State Generated: HIGH_BIOLOAD. Total fish length ({}cm) exceeds volume ({}L).", drools.getRule().getName(), $totalLength, $vol);
+end
+
+rule "State: Ammonia Spike Risk"
+when
+    Aquarium(ageInDays < 14)
+    State(stateType == StateType.HIGH_BIOLOAD)
+    not State(stateType == StateType.AMMONIA_SPIKE)
+then
+    insert(new State(StateType.AMMONIA_SPIKE));
+    logger.trace("[{}] State Generated: AMMONIA_SPIKE. Tank under 14 days old with high bioload.",
+        drools.getRule().getName());
+end
+
+rule "State: Missing Heater For Tropical Fish"
+when
+    $f : Fish($species : species, $id : speciesId)
+    FishData(speciesId == $id, tropical == true)
+    Aquarium(equipment != null, equipment.heaterModel == null)
+    not State(stateType == StateType.MISSING_HEATER)
+then
+    insert(new State(StateType.MISSING_HEATER, $id));
+    logger.trace("[{}] State Generated: MISSING_HEATER. Tropical species {} present without a heater.", 
+        drools.getRule().getName(), $species);
+end
+
+rule "State: Weak Filtration"
+when
+    Aquarium($vol : volumeLiters, equipment != null, equipment.filterFlowRateLPH != null, equipment.filterFlowRateLPH < (3 * $vol))
+    not State(stateType == StateType.WEAK_FILTRATION)
+then
+    insert(new State(StateType.WEAK_FILTRATION));
+    logger.trace("[{}] State Generated: WEAK_FILTRATION. Filter turnover below 3x volume/hour.",
+        drools.getRule().getName());
+end
+
+rule "State: Insufficient Hiding Spots"
+when
+    $aq : Aquarium($spots : hidingSpots)
+    Number(doubleValue > ($spots * 2)) from accumulate(
+        Fish($qty : quantity, $id : speciesId)
+        and Trait(speciesId == $id, traitType == TraitType.AGGRESSIVE),
+        sum($qty)
+    )
+    not State(stateType == StateType.INSUFFICIENT_HIDING)
+then
+    insert(new State(StateType.INSUFFICIENT_HIDING));
+    logger.trace("[{}] State Generated: INSUFFICIENT_HIDING. {} hiding spots insufficient for territorial fish present.",
+        drools.getRule().getName(), $spots);
 end

@@ -21,4 +21,5 @@ public class FishData {
     private Double trophicLevel;
     private Integer minGroupSize;
     private Integer aggressionLevel; // 1-10 scale
+    private boolean tropical;
 }

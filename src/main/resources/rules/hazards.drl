@@ -45,3 +45,65 @@ then
     );
     logger.trace("[{}] Hazard Detected: OVERCROWDING", drools.getRule().getName());
 end
+
+rule "Hazard: Escape Risk Without Cover"
+when
+    Aquarium(hasCover == false)
+    $f : Fish($id : speciesId, $species : species)
+    Trait(traitType == TraitType.SURFACE_AIR_BREATHER, speciesId == $id)
+    not Hazard(type == RiskType.ESCAPE_RISK, affectedSpeciesId == $id)
+then
+    insert(new Hazard(RiskType.ESCAPE_RISK, $id,
+        $species + " is a surface air breather and may escape without a tank cover.", 1.0));
+    logger.trace("[{}] Hazard Detected: ESCAPE_RISK for {}", drools.getRule().getName(), $species);
+end
+
+rule "Hazard: Social Stress Below Minimum Group Size"
+when
+    $f : Fish($id : speciesId, $species : species, $qty : quantity)
+    Trait(traitType == TraitType.SCHOOLING_FISH, speciesId == $id)
+    FishData(species == $species, minGroupSize != null, minGroupSize > $qty)
+    not Hazard(type == RiskType.SOCIAL_STRESS, affectedSpeciesId == $id)
+then
+    insert(new Hazard(RiskType.SOCIAL_STRESS, $id,
+        $species + " is a schooling fish kept below its required group size.", 1.0));
+    logger.trace("[{}] Hazard Detected: SOCIAL_STRESS for {}", drools.getRule().getName(), $species);
+end
+
+rule "Hazard: Territorial Conflict Risk"
+when
+    $f : Fish($id : speciesId, $species : species)
+    Trait(traitType == TraitType.AGGRESSIVE, speciesId == $id)
+    State(stateType == StateType.INSUFFICIENT_HIDING)
+    not Hazard(type == RiskType.TERRITORIAL_CONFLICT, affectedSpeciesId == $id)
+then
+    insert(new Hazard(RiskType.TERRITORIAL_CONFLICT, $id,
+        $species + " is territorial and the tank lacks sufficient hiding spots.", 1.0));
+    logger.trace("[{}] Hazard Detected: TERRITORIAL_CONFLICT for {}", drools.getRule().getName(), $species);
+end
+
+rule "Hazard: Toxic Free Ammonia From High pH"
+when
+    State(stateType == StateType.AMMONIA_SPIKE)
+    Aquarium(waterParameters != null, waterParameters.ph >= 7.5)
+    not Hazard(type == RiskType.TOXIC_FREE_AMMONIA)
+then
+    insert(new Hazard(RiskType.TOXIC_FREE_AMMONIA, -1,
+        "Ammonia spike combined with pH 7.5 or higher produces toxic free ammonia (NH3).", 1.0));
+    logger.trace("[{}] Hazard Detected: TOXIC_FREE_AMMONIA", drools.getRule().getName());
+end
+
+rule "Hazard: Predation Risk"
+when
+    $predator : Fish($predatorId : speciesId, $predatorSpecies : species)
+    Trait(traitType == TraitType.PREDATOR, speciesId == $predatorId)
+    FishData(species == $predatorSpecies, $predatorLen : maxAdultLengthCm)
+    $prey : Fish(speciesId != $predatorId, $preySpecies : species, $preyId : speciesId)
+    FishData(species == $preySpecies, maxAdultLengthCm != null, maxAdultLengthCm * 2 <= $predatorLen)
+    not Hazard(type == RiskType.PREDATION, affectedSpeciesId == $preyId)
+then
+    insert(new Hazard(RiskType.PREDATION, $preyId,
+        $predatorSpecies + " is large and predatory enough to prey on " + $preySpecies + ".", 1.0));
+    logger.trace("[{}] Hazard Detected: PREDATION risk to {} from {}",
+        drools.getRule().getName(), $preySpecies, $predatorSpecies);
+end

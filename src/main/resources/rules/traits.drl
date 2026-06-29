@@ -75,3 +75,33 @@ then
     insert(new Trait($id, TraitType.SURFACE_AIR_BREATHER));
     logger.trace("[{}] Inferred Trait: SURFACE_AIR_BREATHER for {}(id={})", drools.getRule().getName(), $species, $id);
 end
+
+rule "Trait: Infer Schooling Fish"
+when
+    $f : Fish($species : species, $id : speciesId)
+    FishData(speciesId == $id, minGroupSize != null, minGroupSize > 4)
+    not Trait(speciesId == $id, traitType == TraitType.SCHOOLING_FISH)
+then
+    insert(new Trait($id, TraitType.SCHOOLING_FISH));
+    logger.trace("[{}] Inferred Trait: SCHOOLING_FISH for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Aggressive"
+when
+    $f : Fish($species : species, $id : speciesId)
+    FishData(speciesId == $id, aggressionLevel != null, aggressionLevel >= 7)
+    not Trait(speciesId == $id, traitType == TraitType.AGGRESSIVE)
+then
+    insert(new Trait($id, TraitType.AGGRESSIVE));
+    logger.trace("[{}] Inferred Trait: AGGRESSIVE for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Predator"
+when
+    $f : Fish($species : species, $id : speciesId)
+    FishData(speciesId == $id, trophicLevel != null, trophicLevel >= 3.2)
+    not Trait(speciesId == $id, traitType == TraitType.PREDATOR)
+then
+    insert(new Trait($id, TraitType.PREDATOR));
+    logger.trace("[{}] Inferred Trait: PREDATOR for {}(id={})", drools.getRule().getName(), $species, $id);
+end
