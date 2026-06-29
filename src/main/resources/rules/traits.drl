@@ -1,0 +1,107 @@
+package rules;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+import com.github.filipt03.aquaristic_validator.model.domain.FishData;
+
+import com.github.filipt03.aquaristic_validator.model.inference.Trait;
+import com.github.filipt03.aquaristic_validator.model.inference.State;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
+
+import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
+import com.github.filipt03.aquaristic_validator.model.types.StateType;
+import com.github.filipt03.aquaristic_validator.model.types.TraitType;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
+
+global org.slf4j.Logger logger;
+
+rule "Trait: Infer Sensitive Barbels Cobitidae"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, family == "Cobitidae")
+    not Trait(speciesId == $id, traitType == TraitType.SENSITIVE_BARBELS)
+then
+    insert(new Trait($id, TraitType.SENSITIVE_BARBELS));
+    logger.trace("[{}] Inferred Trait: SENSITIVE_BARBELS for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Sensitive Barbels Callichthyidae"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, family == "Callichthyidae")
+    not Trait(speciesId == $id, traitType == TraitType.SENSITIVE_BARBELS)
+then
+    insert(new Trait($id, TraitType.SENSITIVE_BARBELS));
+    logger.trace("[{}] Inferred Trait: SENSITIVE_BARBELS for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Bottom Dweller bethic"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, ecology contains "benthic")
+    not Trait(speciesId == $id, traitType == TraitType.BOTTOM_DWELLER)
+then
+    insert(new Trait($id, TraitType.BOTTOM_DWELLER));
+    logger.trace("[{}] Inferred Trait: BOTTOM_DWELLER for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Bottom Dweller demersal"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, ecology contains "demersal")
+    not Trait(speciesId == $id, traitType == TraitType.BOTTOM_DWELLER)
+then
+    insert(new Trait($id, TraitType.BOTTOM_DWELLER));
+    logger.trace("[{}] Inferred Trait: BOTTOM_DWELLER for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Surface Air Breather Obligate"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, airBreathing == "Obligate")
+    not Trait(speciesId == $id, traitType == TraitType.SURFACE_AIR_BREATHER)
+then
+    insert(new Trait($id, TraitType.SURFACE_AIR_BREATHER));
+    logger.trace("[{}] Inferred Trait: SURFACE_AIR_BREATHER for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Surface Air Breather Facultative"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, airBreathing == "Facultative")
+    not Trait(speciesId == $id, traitType == TraitType.SURFACE_AIR_BREATHER)
+then
+    insert(new Trait($id, TraitType.SURFACE_AIR_BREATHER));
+    logger.trace("[{}] Inferred Trait: SURFACE_AIR_BREATHER for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Schooling Fish"
+when
+    $f : Fish($species : species, $id : speciesId)
+    FishData(speciesId == $id, minGroupSize != null, minGroupSize > 4)
+    not Trait(speciesId == $id, traitType == TraitType.SCHOOLING_FISH)
+then
+    insert(new Trait($id, TraitType.SCHOOLING_FISH));
+    logger.trace("[{}] Inferred Trait: SCHOOLING_FISH for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Aggressive"
+when
+    $f : Fish($species : species, $id : speciesId)
+    FishData(speciesId == $id, aggressionLevel != null, aggressionLevel >= 7)
+    not Trait(speciesId == $id, traitType == TraitType.AGGRESSIVE)
+then
+    insert(new Trait($id, TraitType.AGGRESSIVE));
+    logger.trace("[{}] Inferred Trait: AGGRESSIVE for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Predator"
+when
+    $f : Fish($species : species, $id : speciesId)
+    FishData(speciesId == $id, trophicLevel != null, trophicLevel >= 3.2)
+    not Trait(speciesId == $id, traitType == TraitType.PREDATOR)
+then
+    insert(new Trait($id, TraitType.PREDATOR));
+    logger.trace("[{}] Inferred Trait: PREDATOR for {}(id={})", drools.getRule().getName(), $species, $id);
+end

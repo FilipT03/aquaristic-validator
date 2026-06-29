@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Aquaristic Validator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 p-6 max-w-3xl mx-auto">
+
+<h1 class="text-2xl font-bold mb-4">Aquaristic Validator</h1>
+
+<div class="flex gap-2 mb-4">
+  <button onclick="showTab('validate')" class="px-3 py-1 rounded bg-blue-600 text-white">Validate</button>
+  <button onclick="showTab('support')" class="px-3 py-1 rounded bg-gray-300">Species Support</button>
+</div>
+
+<section id="tab-validate">
+  <div class="flex gap-2 mb-4">
+  <button onclick="exportFormData()" class="px-3 py-1 bg-gray-700 text-white rounded text-sm">Save Test Data (JSON)</button>
+  <label class="px-3 py-1 bg-gray-700 text-white rounded text-sm cursor-pointer">
+    Load Test Data (JSON)
+    <input type="file" accept="application/json" class="hidden" onchange="importFormData(event)">
+  </label>
+</div>
+
+  <div class="grid grid-cols-2 gap-3 mb-3">
+    <label>Volume (L) <input id="volumeLiters" type="number" value="60" class="border rounded w-full p-1"></label>
+    <label>Length (cm) <input id="lengthCm" type="number" value="50" class="border rounded w-full p-1"></label>
+    <label>Width (cm) <input id="widthCm" type="number" value="15" class="border rounded w-full p-1"></label>
+    <label>Height (cm) <input id="heightCm" type="number" value="30" class="border rounded w-full p-1"></label>
+    <label>Age (days) <input id="ageInDays" type="number" value="5" class="border rounded w-full p-1"></label>
+    <label>pH <input id="ph" type="number" step="0.1" value="8.0" class="border rounded w-full p-1"></label>
+    <label>Temperature (C) <input id="temperatureC" type="number" step="0.1" value="24.0" class="border rounded w-full p-1"></label>
+    <label>Hiding Spots <input id="hidingSpots" type="number" value="2" class="border rounded w-full p-1"></label>
+    <label>Substrate
+      <select id="substrateType" class="border rounded w-full p-1">
+        <option>SHARP_GRAVEL</option>
+        <option>SAND</option>
+        <option>NUTRIENT_SUBSTRATE</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="flex gap-4 mb-3">
+    <label class="flex items-center gap-2"><input id="hasCover" type="checkbox"> Has Cover</label>
+    <label class="flex items-center gap-2"><input id="hasLivePlants" type="checkbox"> Has Live Plants</label>
+    <label class="flex items-center gap-2"><input id="hasWoodDecoration" type="checkbox"> Has Wood Decoration</label>
+  </div>
+
+  <h3 class="font-semibold mt-4 mb-2">Equipment</h3>
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <label>Filter Model
+      <select id="filterModel" class="border rounded w-full p-1"><option value="">-- none --</option></select>
+    </label>
+    <label>Filter Flow Rate (L/h, optional)
+      <input id="filterFlowRateLPH" type="number" placeholder="leave blank if unknown" class="border rounded w-full p-1">
+    </label>
+    <label>Heater Model
+      <select id="heaterModel" class="border rounded w-full p-1"><option value="">-- none --</option></select>
+    </label>
+    <label class="flex items-center gap-2 mt-5"><input id="hasLights" type="checkbox"> Has Lights</label>
+  </div>
+
+  <h3 class="font-semibold mt-4 mb-2">Fish</h3>
+  <div class="flex gap-2 mb-2">
+    <select id="fishSpeciesSelect" class="border rounded p-1 flex-1"></select>
+    <input id="fishQuantityInput" type="number" min="1" value="1" class="border rounded p-1 w-20">
+    <button onclick="addFish()" class="px-3 py-1 bg-blue-600 text-white rounded">Add</button>
+  </div>
+  <ul id="fishListDisplay" class="mb-4 list-disc pl-5"></ul>
+
+  <button onclick="runValidate()" class="px-4 py-2 bg-green-600 text-white rounded mb-4">Run Validation</button>
+  <div id="validateResult" class="bg-white border rounded p-4">
+  <div id="scoreDisplay" class="text-3xl font-bold"></div>
+  <div id="verdictDisplay" class="text-lg mb-3"></div>
+  <div id="severityBadges" class="flex gap-2 flex-wrap mb-3 text-sm"></div>
+  <details>
+    <summary class="cursor-pointer font-semibold">Full details</summary>
+    <ul id="messageList" class="list-disc pl-5 mt-2"></ul>
+  </details>
+</div>
+</section>
+
+<section id="tab-support" class="hidden">
+  <label class="block mb-2">Species
+    <select id="speciesSelect" class="border rounded w-full p-1"></select>
+  </label>
+  <button onclick="runSupportCheck()" class="px-4 py-2 bg-green-600 text-white rounded mb-4">Check Support</button>
+  <div id="supportResult" class="bg-white border rounded p-3"></div>
+</section>
+
+<script>
+let allSpecies = [];
+let selectedFish = []; // [{speciesId, quantity, label}]
+
+function showTab(name) {
+  document.getElementById('tab-validate').classList.toggle('hidden', name !== 'validate');
+  document.getElementById('tab-support').classList.toggle('hidden', name !== 'support');
+}
+
+function speciesLabel(s) {
+  return (s.commonName ? s.commonName + ' (' + s.species + ')' : s.species);
+}
+
+async function loadSpecies() {
+  const res = await fetch('/api/species');
+  allSpecies = await res.json();
+
+  const opts = allSpecies.map(s => `<option value="${s.speciesId}">${speciesLabel(s)}</option>`).join('');
+  document.getElementById('fishSpeciesSelect').innerHTML = opts;
+  document.getElementById('speciesSelect').innerHTML = opts;
+}
+
+async function loadEquipment() {
+  const [filterRes, heaterRes] = await Promise.all([fetch('/api/filters'), fetch('/api/heaters')]);
+  const filters = await filterRes.json();
+  const heaters = await heaterRes.json();
+
+  const filterSelect = document.getElementById('filterModel');
+  filters.forEach(f => {
+    const opt = document.createElement('option');
+    opt.value = f.model;
+    opt.textContent = `${f.model} (up to ${f.maxSupportedVolumeL}L)`;
+    filterSelect.appendChild(opt);
+  });
+
+  const heaterSelect = document.getElementById('heaterModel');
+  heaters.forEach(h => {
+    const opt = document.createElement('option');
+    opt.value = h.model;
+    opt.textContent = `${h.model} (up to ${h.maxSupportedVolumeL}L)`;
+    heaterSelect.appendChild(opt);
+  });
+}
+
+function addFish() {
+  const select = document.getElementById('fishSpeciesSelect');
+  const speciesId = parseInt(select.value, 10);
+  const quantity = parseInt(document.getElementById('fishQuantityInput').value, 10);
+  if (!speciesId || !quantity || quantity < 1) return;
+
+  const species = allSpecies.find(s => s.speciesId === speciesId);
+  selectedFish.push({ speciesId, quantity, label: speciesLabel(species) });
+  renderFishList();
+}
+
+function removeFish(index) {
+  selectedFish.splice(index, 1);
+  renderFishList();
+}
+
+function renderFishList() {
+  const ul = document.getElementById('fishListDisplay');
+  ul.innerHTML = selectedFish.map((f, i) =>
+    `<li>${f.label} x ${f.quantity}
+       <button onclick="removeFish(${i})" class="text-red-600 ml-2">remove</button>
+     </li>`
+  ).join('');
+}
+
+function buildAquariumRequest() {
+  const flowRateRaw = document.getElementById('filterFlowRateLPH').value;
+  return {
+    volumeLiters: parseFloat(document.getElementById('volumeLiters').value),
+    lengthCm: parseFloat(document.getElementById('lengthCm').value),
+    widthCm: parseFloat(document.getElementById('widthCm').value),
+    heightCm: parseFloat(document.getElementById('heightCm').value),
+    ageInDays: parseInt(document.getElementById('ageInDays').value, 10),
+    substrateType: document.getElementById('substrateType').value,
+    hasCover: document.getElementById('hasCover').checked,
+    hasLivePlants: document.getElementById('hasLivePlants').checked,
+    hasWoodDecoration: document.getElementById('hasWoodDecoration').checked,
+    hidingSpots: parseInt(document.getElementById('hidingSpots').value, 10),
+    ph: parseFloat(document.getElementById('ph').value),
+    temperatureC: parseFloat(document.getElementById('temperatureC').value),
+    equipment: {
+      filterModel: document.getElementById('filterModel').value || null,
+      heaterModel: document.getElementById('heaterModel').value || null,
+      filterFlowRateLPH: flowRateRaw === '' ? null : parseFloat(flowRateRaw),
+      hasLights: document.getElementById('hasLights').checked
+    },
+    fish: selectedFish.map(f => ({ speciesId: f.speciesId, quantity: f.quantity }))
+  };
+}
+
+async function runValidate() {
+  const res = await fetch('/api/validate', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(buildAquariumRequest())
+  });
+  const data = await res.json();
+  if (!res.ok) { document.getElementById('scoreDisplay').textContent = 'Error: ' + (data.message || res.status); return; }
+
+  document.getElementById('scoreDisplay').textContent = 'Score: ' + data.score + ' / 100';
+  document.getElementById('scoreDisplay').className = 'text-3xl font-bold ' + scoreColor(data.score);
+  document.getElementById('verdictDisplay').textContent = data.verdict;
+
+  const badges = document.getElementById('severityBadges');
+  badges.innerHTML = '';
+  addBadge(badges, 'Critical', data.issueCounts.critical, 'bg-red-600');
+  addBadge(badges, 'Major', data.issueCounts.major, 'bg-orange-500');
+  addBadge(badges, 'Moderate', data.issueCounts.moderate, 'bg-yellow-500');
+  addBadge(badges, 'Minor', data.issueCounts.minor, 'bg-yellow-300 text-gray-800');
+
+  document.getElementById('messageList').innerHTML = data.messages.map(m => `<li>${m}</li>`).join('');
+}
+
+function addBadge(container, label, count, colorClass) {
+  if (!count) return;
+  const span = document.createElement('span');
+  span.className = colorClass + ' text-white px-2 py-1 rounded-full';
+  span.textContent = count + ' ' + label;
+  container.appendChild(span);
+}
+
+function scoreColor(score) {
+  if (score >= 75) return 'text-green-600';
+  if (score >= 50) return 'text-yellow-600';
+  if (score >= 25) return 'text-orange-600';
+  return 'text-red-600';
+}
+
+async function runSupportCheck() {
+  const speciesId = document.getElementById('speciesSelect').value;
+  const res = await fetch('/api/species-support?speciesId=' + speciesId, {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(buildAquariumRequest())
+  });
+  const tree = await res.json();
+  const container = document.getElementById('supportResult');
+  container.innerHTML = '';
+  container.appendChild(renderNode('SPECIES_SUPPORTED', tree));
+}
+
+function renderNode(goalKey, tree) {
+  const entries = tree[goalKey];
+  if (!entries) {
+    const div = document.createElement('div');
+    div.className = 'text-green-600 ml-2';
+    div.textContent = '✓ ' + goalKey + ' - Satisfied';
+    return div;
+  }
+  if (entries[0].child === null) {
+    const div = document.createElement('div');
+    div.className = 'text-red-600 ml-2';
+    div.textContent = '✗ ' + goalKey + ' - ' + entries[0].explanation;
+    return div;
+  }
+  const details = document.createElement('details');
+  details.open = true;
+  const summary = document.createElement('summary');
+  summary.className = 'font-semibold cursor-pointer text-red-700';
+  summary.textContent = goalKey;
+  details.appendChild(summary);
+  const ul = document.createElement('ul');
+  ul.className = 'pl-4 border-l border-gray-300 ml-2 mt-1';
+  entries.forEach(entry => {
+    const li = document.createElement('li');
+    li.appendChild(renderNode(entry.child, tree));
+    ul.appendChild(li);
+  });
+  details.appendChild(ul);
+  return details;
+}
+
+function exportFormData() {
+  const data = buildAquariumRequest();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'aquarium-test-data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importFormData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const data = JSON.parse(await file.text());
+
+  document.getElementById('volumeLiters').value = data.volumeLiters;
+  document.getElementById('lengthCm').value = data.lengthCm;
+  document.getElementById('widthCm').value = data.widthCm;
+  document.getElementById('heightCm').value = data.heightCm;
+  document.getElementById('ageInDays').value = data.ageInDays;
+  document.getElementById('substrateType').value = data.substrateType;
+  document.getElementById('hasCover').checked = data.hasCover;
+  document.getElementById('hasLivePlants').checked = data.hasLivePlants;
+  document.getElementById('hasWoodDecoration').checked = data.hasWoodDecoration;
+  document.getElementById('hidingSpots').value = data.hidingSpots;
+  document.getElementById('ph').value = data.ph;
+  document.getElementById('temperatureC').value = data.temperatureC;
+  document.getElementById('filterModel').value = data.equipment?.filterModel || '';
+  document.getElementById('heaterModel').value = data.equipment?.heaterModel || '';
+  document.getElementById('filterFlowRateLPH').value = data.equipment?.filterFlowRateLPH ?? '';
+  document.getElementById('hasLights').checked = !!data.equipment?.hasLights;
+
+  selectedFish = (data.fish || []).map(f => {
+    const species = allSpecies.find(s => s.speciesId === f.speciesId);
+    return { speciesId: f.speciesId, quantity: f.quantity, label: species ? speciesLabel(species) : ('Species #' + f.speciesId) };
+  });
+  renderFishList();
+}
+
+loadSpecies();
+loadEquipment();
+</script>
+</body>
+</html>

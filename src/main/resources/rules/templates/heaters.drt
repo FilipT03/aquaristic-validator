@@ -1,0 +1,22 @@
+template header
+HeaterModel
+MaxSupportedVolumeL
+
+package rules.templates.equipment;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
+
+template "Heater Compatibility Validation"
+
+rule "Check Heater @{HeaterModel} Undersized"
+when
+    $aq : Aquarium(equipment != null, equipment.heaterModel == "@{HeaterModel}", volumeLiters > @{MaxSupportedVolumeL})
+    not Hazard(type == RiskType.UNDERSIZED_HEATER_VOLUME)
+then
+    insert(new Hazard(RiskType.UNDERSIZED_HEATER_VOLUME, -1,
+        "Heater model @{HeaterModel} is rated for up to @{MaxSupportedVolumeL}L but tank volume exceeds this.", 1.0));
+end
+
+end template

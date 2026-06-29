@@ -1,0 +1,63 @@
+package rules.backward;
+
+import com.github.filipt03.aquaristic_validator.model.backward.GoalRequirement;
+import com.github.filipt03.aquaristic_validator.model.backward.Condition;
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+import com.github.filipt03.aquaristic_validator.model.domain.FishData;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
+import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
+
+query requirementsForGoal(String $target, String $requirement, Condition $condition, String $explanation, boolean $terminal, int $speciesId)
+    (
+        GoalRequirement( goal == $target, requirement == $requirement, condition == $condition, explanation == $explanation, terminal == $terminal)
+        and conditionSatisfied($condition, $speciesId; )
+    )
+    or
+    (
+    GoalRequirement( goal == $target, $next : requirement, $nextCondition : condition )
+    and conditionSatisfied($nextCondition, $speciesId; )
+    and requirementsForGoal( $next, $requirement, $condition, $explanation, $terminal, $speciesId; )
+    )
+end
+
+query conditionSatisfied(Condition $condition, int $speciesId)
+    eval($condition.isAlwaysTrue())
+    or
+    (
+    eval($condition.getField() == "diet")
+    and eval($condition.getOperator() == "contains")
+    and FishData(speciesId == $speciesId, diet contains $condition.getValue())
+    )
+end
+
+query adequateLightingSatisfied()
+    Aquarium(equipment != null, equipment.isHasLights() == true)
+end
+
+query nutrientSubstrateSatisfied()
+    Aquarium(substrateType == SubstrateType.NUTRIENT_SUBSTRATE)
+end
+
+query organicWasteAvailableSatisfied()
+    Fish()
+end
+
+query livePlantsPresentSatisfied()
+    Aquarium(hasLivePlants == true)
+end
+
+query woodPresentSatisfied()
+    Aquarium(hasWoodDecoration == true)
+end
+
+query waterParametersCompatibleSatisfied(int $speciesId)
+    not Hazard(type == RiskType.WRONG_PH, affectedSpeciesId == $speciesId)
+    not Hazard(type == RiskType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+end
+
+query lowStressEnvironmentSatisfied(int $speciesId)
+    not Hazard(type == RiskType.SOCIAL_STRESS, affectedSpeciesId == $speciesId)
+    not Hazard(type == RiskType.TERRITORIAL_CONFLICT, affectedSpeciesId == $speciesId)
+end

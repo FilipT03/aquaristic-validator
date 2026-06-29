@@ -1,0 +1,109 @@
+package rules;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+
+import com.github.filipt03.aquaristic_validator.model.inference.Trait;
+import com.github.filipt03.aquaristic_validator.model.inference.State;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
+
+import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
+import com.github.filipt03.aquaristic_validator.model.types.StateType;
+import com.github.filipt03.aquaristic_validator.model.types.TraitType;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
+
+global org.slf4j.Logger logger;
+
+rule "Hazard: Physical Injury Risk on Bottom"
+when
+    $aq : Aquarium(substrateType == SubstrateType.SHARP_GRAVEL)
+    $t  : Trait(traitType == TraitType.SENSITIVE_BARBELS, $speciesId : speciesId)
+    $f  : Fish(speciesId == $speciesId)
+    not Hazard(
+        type == RiskType.PHYSICAL_INJURY,
+        affectedSpeciesId == $speciesId
+    )
+then
+    String desc = $f.getSpecies() + " has sensitive barbels and sharp gravel will cause physical injuries and infections.";
+    insert(new Hazard(RiskType.PHYSICAL_INJURY, $speciesId, desc));
+    logger.trace("[{}] Hazard Detected: PHYSICAL_INJURY for {}", drools.getRule().getName(), $f.getSpecies());
+end
+
+rule "Hazard: Overstocking Stress"
+when
+    State(stateType == StateType.HIGH_BIOLOAD)
+
+    not Hazard(type == RiskType.OVERCROWDING)
+then
+    insert(
+        new Hazard(
+            RiskType.OVERCROWDING,
+            -1,
+            "Aquarium is overstocked and fish may suffer chronic stress."
+        )
+    );
+    logger.trace("[{}] Hazard Detected: OVERCROWDING", drools.getRule().getName());
+end
+
+rule "Hazard: Escape Risk Without Cover"
+when
+    Aquarium(hasCover == false)
+    $f : Fish($id : speciesId, $species : species)
+    Trait(traitType == TraitType.SURFACE_AIR_BREATHER, speciesId == $id)
+    not Hazard(type == RiskType.ESCAPE_RISK, affectedSpeciesId == $id)
+then
+    insert(new Hazard(RiskType.ESCAPE_RISK, $id,
+        $species + " is a surface air breather and may escape without a tank cover.", 1.0));
+    logger.trace("[{}] Hazard Detected: ESCAPE_RISK for {}", drools.getRule().getName(), $species);
+end
+
+rule "Hazard: Social Stress Below Minimum Group Size"
+when
+    $f : Fish($id : speciesId, $species : species, $qty : quantity)
+    Trait(traitType == TraitType.SCHOOLING_FISH, speciesId == $id)
+    FishData(species == $species, minGroupSize != null, $minGroupSize : minGroupSize, minGroupSize > $qty)
+    not Hazard(type == RiskType.SOCIAL_STRESS, affectedSpeciesId == $id)
+then
+    insert(new Hazard(RiskType.SOCIAL_STRESS, $id,
+        $species + " is a schooling fish kept below its required group size of " + $minGroupSize + ".", 1.0));
+    logger.trace("[{}] Hazard Detected: SOCIAL_STRESS for {}", drools.getRule().getName(), $species);
+end
+
+rule "Hazard: Territorial Conflict Risk"
+when
+    $f : Fish($id : speciesId, $species : species)
+    Trait(traitType == TraitType.AGGRESSIVE, speciesId == $id)
+    State(stateType == StateType.INSUFFICIENT_HIDING)
+    not Hazard(type == RiskType.TERRITORIAL_CONFLICT, affectedSpeciesId == $id)
+then
+    insert(new Hazard(RiskType.TERRITORIAL_CONFLICT, $id,
+        $species + " is territorial and the tank lacks sufficient hiding spots.", 1.0));
+    logger.trace("[{}] Hazard Detected: TERRITORIAL_CONFLICT for {}", drools.getRule().getName(), $species);
+end
+
+rule "Hazard: Toxic Free Ammonia From High pH"
+when
+    State(stateType == StateType.AMMONIA_SPIKE)
+    Aquarium(waterParameters != null, waterParameters.ph >= 7.5)
+    not Hazard(type == RiskType.TOXIC_FREE_AMMONIA)
+then
+    insert(new Hazard(RiskType.TOXIC_FREE_AMMONIA, -1,
+        "Ammonia spike combined with pH 7.5 or higher produces toxic free ammonia (NH3).", 1.0));
+    logger.trace("[{}] Hazard Detected: TOXIC_FREE_AMMONIA", drools.getRule().getName());
+end
+
+rule "Hazard: Predation Risk"
+when
+    $predator : Fish($predatorId : speciesId, $predatorSpecies : species)
+    Trait(traitType == TraitType.PREDATOR, speciesId == $predatorId)
+    FishData(species == $predatorSpecies, $predatorLen : maxAdultLengthCm)
+    $prey : Fish(speciesId != $predatorId, $preySpecies : species, $preyId : speciesId)
+    FishData(species == $preySpecies, maxAdultLengthCm != null, maxAdultLengthCm * 2 <= $predatorLen)
+    not Hazard(type == RiskType.PREDATION, affectedSpeciesId == $preyId)
+then
+    insert(new Hazard(RiskType.PREDATION, $preyId,
+        $predatorSpecies + " is large and predatory enough to prey on " + $preySpecies + ".", 1.0));
+    logger.trace("[{}] Hazard Detected: PREDATION risk to {} from {}",
+        drools.getRule().getName(), $preySpecies, $predatorSpecies);
+end
