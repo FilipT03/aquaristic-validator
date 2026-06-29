@@ -5,6 +5,5 @@ package com.github.filipt03.aquaristic_validator.model.domain;
 public class Fish {
     private int speciesId;
     private String species;
-    private double averageLengthCm;
     private int quantity;
 }

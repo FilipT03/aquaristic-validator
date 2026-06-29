@@ -7,6 +7,7 @@ import java.util.List;
 @lombok.Builder
 public class FishData {
     private int speciesId;
+    private String commonName;
     private String species;
     private String genus;
     private String family;
