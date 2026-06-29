@@ -1,0 +1,53 @@
+template header
+SpeciesId
+MinPH
+MaxPH
+MinTemperatureC
+MaxTemperatureC
+
+package rules.templates;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.types.HazardType;
+
+template "Water Parameters Validation"
+
+rule "Check pH too low for Fish ID @{SpeciesId}"
+when
+    $f : Fish(speciesId == @{SpeciesId})
+    Aquarium(waterParameters != null, $ph : waterParameters.ph, $ph < @{MinPH})
+    not Hazard(hazardType == HazardType.WRONG_PH, affectedSpeciesId == @{SpeciesId})
+then
+    insert(new Hazard(HazardType.WRONG_PH, $f.getSpeciesId(), $f.getSpecies() + " requires pH between @{MinPH} and @{MaxPH}.", @{MinPH} - $ph));
+end
+
+rule "Check pH too high for Fish ID @{SpeciesId}"
+when
+    $f : Fish(speciesId == @{SpeciesId})
+    Aquarium(waterParameters != null, $ph : waterParameters.ph, $ph > @{MaxPH})
+    not Hazard(hazardType == HazardType.WRONG_PH, affectedSpeciesId == @{SpeciesId})
+then
+    insert(new Hazard(HazardType.WRONG_PH, $f.getSpeciesId(), $f.getSpecies() + " requires pH between @{MinPH} and @{MaxPH}.", $ph - @{MaxPH}));
+end
+
+rule "Check Temperature too low for Fish ID @{SpeciesId}"
+when
+    $f : Fish(speciesId == @{SpeciesId})
+    Aquarium(waterParameters != null, $temperature : waterParameters.temperatureC, $temperature < @{MinTemperatureC})
+    not Hazard(hazardType == HazardType.WRONG_TEMPERATURE, affectedSpeciesId == @{SpeciesId})
+then
+    insert(new Hazard(HazardType.WRONG_TEMPERATURE, $f.getSpeciesId(), $f.getSpecies() + " requires temperature between @{MinTemperatureC}C and @{MaxTemperatureC}C.", @{MinTemperatureC} - $temperature));
+end
+
+rule "Check Temperature too high for Fish ID @{SpeciesId}"
+when
+    $f : Fish(speciesId == @{SpeciesId})
+    Aquarium(waterParameters != null, $temperature : waterParameters.temperatureC, $temperature > @{MaxTemperatureC})
+    not Hazard(hazardType == HazardType.WRONG_TEMPERATURE, affectedSpeciesId == @{SpeciesId})
+then
+    insert(new Hazard(HazardType.WRONG_TEMPERATURE, $f.getSpeciesId(), $f.getSpecies() + " requires temperature between @{MinTemperatureC}C and @{MaxTemperatureC}C.", $temperature - @{MaxTemperatureC}));
+end
+
+end template

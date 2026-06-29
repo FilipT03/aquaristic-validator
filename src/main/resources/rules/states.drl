@@ -2,6 +2,7 @@ package rules;
 
 import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
 import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+import com.github.filipt03.aquaristic_validator.model.domain.FishData;
 
 import com.github.filipt03.aquaristic_validator.model.inference.Trait;
 import com.github.filipt03.aquaristic_validator.model.inference.State;
@@ -21,8 +22,8 @@ when
     $aq : Aquarium($vol : volumeLiters)
     $totalLength : Number(doubleValue > $vol) from accumulate(
         Fish($species : species, $qty : quantity)
-        and FishData(species == $species, $len : maxAdultLengthCm),
-        sum(($len == null ? 0.0 : $len) * $qty)
+        and FishData(species == $species, maxAdultLengthCm != null, $len : maxAdultLengthCm),
+        sum($len * $qty)
     )
     not State(stateType == StateType.HIGH_BIOLOAD)
 then

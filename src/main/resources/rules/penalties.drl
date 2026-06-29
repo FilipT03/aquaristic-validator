@@ -1,3 +1,4 @@
+
 package rules;
 
 import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
@@ -18,11 +19,11 @@ global org.slf4j.Logger logger;
 
 rule "Penalty: Penalize Physical Injury"
 when
-    $h : Hazard(hazardType == HazardType.PHYSICAL_INJURY, $species : affectedSpecies, $desc : description)
-    not Penalty(penaltyType == PenaltyType.PHYSICAL_INJURY, affectedSpecies == $species)
+    $h : Hazard(hazardType == HazardType.PHYSICAL_INJURY, $speciesId : affectedSpeciesId, $desc : description)
+    not Penalty(penaltyType == PenaltyType.PHYSICAL_INJURY, affectedSpeciesId == $speciesId)
 then
     insert(new Penalty(
-        PenaltyType.PHYSICAL_INJURY, $species, 15,
+        PenaltyType.PHYSICAL_INJURY, $speciesId, 15,
         "CRITICAL (Physical Injury): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());
@@ -31,11 +32,131 @@ end
 rule "Penalty: Penalize Overcrowding"
 when
     $h : Hazard(hazardType == HazardType.OVERCROWDING, $desc : description)
-    not Penalty(penaltyType == PenaltyType.OVERCROWDING)
+    not Penalty(penaltyType == PenaltyType.OVERCROWDING, affectedSpeciesId == -1)
 then
     insert(new Penalty(
-        PenaltyType.OVERCROWDING, "GLOBAL", 10,
+        PenaltyType.OVERCROWDING, -1, 10,
         "MAJOR (Overcrowding): " + $desc
     ));
     logger.trace("[{}] Penalty Added: Score decreased by 10.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Wrong pH Minor"
+when
+    $h : Hazard(
+        hazardType == HazardType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        $severity > 0, $severity <= 0.5
+    )
+    not Penalty(penaltyType == PenaltyType.WRONG_PH, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(
+        PenaltyType.WRONG_PH, $speciesId, 3,
+        "MINOR (pH wrong by " + $severity + "): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 3.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Wrong pH Moderate"
+when
+    $h : Hazard(
+        hazardType == HazardType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        $severity > 0.5, $severity <= 1.0
+    )
+    not Penalty(penaltyType == PenaltyType.WRONG_PH, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(
+        PenaltyType.WRONG_PH, $speciesId, 6,
+        "MODERATE (pH wrong by " + $severity + "): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 6.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Wrong pH Major"
+when
+    $h : Hazard(
+        hazardType == HazardType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        $severity > 1.0, $severity <= 2.0
+    )
+    not Penalty(penaltyType == PenaltyType.WRONG_PH, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(
+        PenaltyType.WRONG_PH, $speciesId, 9,
+        "MAJOR (pH wrong by " + $severity + "): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 9.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Wrong pH Critical"
+when
+    $h : Hazard(
+        hazardType == HazardType.WRONG_PH, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        $severity > 2.0
+    )
+    not Penalty(penaltyType == PenaltyType.WRONG_PH, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(
+        PenaltyType.WRONG_PH, $speciesId, 15,
+        "CRITICAL (pH wrong by " + $severity + "): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Wrong Temperature Minor"
+when
+    $h : Hazard(
+        hazardType == HazardType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        $severity > 0, $severity <= 2.0
+    )
+    not Penalty(penaltyType == PenaltyType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(
+        PenaltyType.WRONG_TEMPERATURE, $speciesId, 3,
+        "MINOR (Temperature wrong by " + $severity + "): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 3.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Wrong Temperature Moderate"
+when
+    $h : Hazard(
+        hazardType == HazardType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        $severity > 2.0, $severity <= 4.0
+    )
+    not Penalty(penaltyType == PenaltyType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(
+        PenaltyType.WRONG_TEMPERATURE, $speciesId, 6,
+        "MODERATE (Temperature wrong by " + $severity + "): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 6.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Wrong Temperature Major"
+when
+    $h : Hazard(
+        hazardType == HazardType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        $severity > 4.0, $severity <= 6.0
+    )
+    not Penalty(penaltyType == PenaltyType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(
+        PenaltyType.WRONG_TEMPERATURE, $speciesId, 9,
+        "MAJOR (Temperature wrong by " + $severity + "): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 9.", drools.getRule().getName());
+end
+
+rule "Penalty: Penalize Wrong Temperature Critical"
+when
+    $h : Hazard(
+        hazardType == HazardType.WRONG_TEMPERATURE, $speciesId : affectedSpeciesId, $desc : description, $severity : severity,
+        $severity > 6.0
+    )
+    not Penalty(penaltyType == PenaltyType.WRONG_TEMPERATURE, affectedSpeciesId == $speciesId)
+then
+    insert(new Penalty(
+        PenaltyType.WRONG_TEMPERATURE, $speciesId, 15,
+        "CRITICAL (Temperature wrong by " + $severity + "): " + $desc
+    ));
+    logger.trace("[{}] Penalty Added: Score decreased by 15.", drools.getRule().getName());
 end

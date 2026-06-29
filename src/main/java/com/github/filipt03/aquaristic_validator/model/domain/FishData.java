@@ -6,11 +6,13 @@ import java.util.List;
 @lombok.AllArgsConstructor
 @lombok.Builder
 public class FishData {
+    private int speciesId;
     private String species;
     private String genus;
     private String family;
     
     private List<String> ecology;
+    private String airBreathing;
     private List<String> behaviors;
     private List<String> habitats;
     private List<String> diet;
@@ -18,12 +20,5 @@ public class FishData {
     private Double maxAdultLengthCm;
     private Double trophicLevel;
     private Integer minGroupSize;
-    private Integer aggresionLevel; // 1-10 scale
-
-    private Double minPH;
-    private Double maxPH;
-    private Double minTemperatureC;
-    private Double maxTemperatureC;
-    private Double minGH;
-    private Double maxGH;
+    private Integer aggressionLevel; // 1-10 scale
 }

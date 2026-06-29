@@ -6,7 +6,7 @@ import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
 @lombok.AllArgsConstructor
 public class Penalty {
     private PenaltyType penaltyType;
-    private String affectedSpecies;
+    private int affectedSpeciesId;
     private int value;
     private String message;
 }
