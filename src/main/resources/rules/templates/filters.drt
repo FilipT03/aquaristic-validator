@@ -1,0 +1,32 @@
+template header
+FilterModel
+MaxSupportedVolumeL
+MaxSupportedHeightCm
+
+package rules.templates.equipment;
+
+import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
+import com.github.filipt03.aquaristic_validator.model.inference.Hazard;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
+
+template "Filter Compatibility Validation"
+
+rule "Check Filter @{FilterModel} Undersized Volume"
+when
+    $aq : Aquarium(equipment != null, equipment.filterModel == "@{FilterModel}", volumeLiters > @{MaxSupportedVolumeL})
+    not Hazard(type == RiskType.UNDERSIZED_FILTER_VOLUME)
+then
+    insert(new Hazard(RiskType.UNDERSIZED_FILTER_VOLUME, -1,
+        "Filter model @{FilterModel} is rated for up to @{MaxSupportedVolumeL}L but tank volume exceeds this."));
+end
+
+rule "Check Filter @{FilterModel} Undersized Height"
+when
+    $aq : Aquarium(equipment != null, equipment.filterModel == "@{FilterModel}", heightCm > @{MaxSupportedHeightCm})
+    not Hazard(type == RiskType.UNDERSIZED_FILTER_HEIGHT)
+then
+    insert(new Hazard(RiskType.UNDERSIZED_FILTER_HEIGHT, -1,
+        "Filter model @{FilterModel} is rated for up to @{MaxSupportedHeightCm}cm but tank height exceeds this."));
+end
+
+end template

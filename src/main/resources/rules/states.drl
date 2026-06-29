@@ -2,6 +2,7 @@ package rules;
 
 import com.github.filipt03.aquaristic_validator.model.domain.Aquarium;
 import com.github.filipt03.aquaristic_validator.model.domain.Fish;
+import com.github.filipt03.aquaristic_validator.model.domain.FishData;
 
 import com.github.filipt03.aquaristic_validator.model.inference.Trait;
 import com.github.filipt03.aquaristic_validator.model.inference.State;
@@ -11,8 +12,7 @@ import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
 import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
 import com.github.filipt03.aquaristic_validator.model.types.StateType;
 import com.github.filipt03.aquaristic_validator.model.types.TraitType;
-import com.github.filipt03.aquaristic_validator.model.types.HazardType;
-import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
 
 global org.slf4j.Logger logger;
 
@@ -21,8 +21,8 @@ when
     $aq : Aquarium($vol : volumeLiters)
     $totalLength : Number(doubleValue > $vol) from accumulate(
         Fish($species : species, $qty : quantity)
-        and FishData(species == $species, $len : maxAdultLengthCm),
-        sum(($len == null ? 0.0 : $len) * $qty)
+        and FishData(species == $species, maxAdultLengthCm != null, $len : maxAdultLengthCm),
+        sum($len * $qty)
     )
     not State(stateType == StateType.HIGH_BIOLOAD)
 then

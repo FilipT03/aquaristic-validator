@@ -12,30 +12,66 @@ import com.github.filipt03.aquaristic_validator.model.inference.Penalty;
 import com.github.filipt03.aquaristic_validator.model.types.SubstrateType;
 import com.github.filipt03.aquaristic_validator.model.types.StateType;
 import com.github.filipt03.aquaristic_validator.model.types.TraitType;
-import com.github.filipt03.aquaristic_validator.model.types.HazardType;
-import com.github.filipt03.aquaristic_validator.model.types.PenaltyType;
+import com.github.filipt03.aquaristic_validator.model.types.RiskType;
 
 global org.slf4j.Logger logger;
 
-rule "Trait: Infer Sensitive Barbels"
+rule "Trait: Infer Sensitive Barbels Cobitidae"
 when
-    // TODO: Remove hardcoded family names, use template
-    $f : Fish(family == "Cobitidae" || family == "Callichthyidae", $species : species)
-    not Trait(fishSpecies == $species, traitType == TraitType.SENSITIVE_BARBELS)
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, family == "Cobitidae")
+    not Trait(speciesId == $id, traitType == TraitType.SENSITIVE_BARBELS)
 then
-    insert(new Trait($species, TraitType.SENSITIVE_BARBELS));
-    logger.trace("[{}] Inferred Trait: SENSITIVE_BARBELS for {}", drools.getRule().getName(), $species);
+    insert(new Trait($id, TraitType.SENSITIVE_BARBELS));
+    logger.trace("[{}] Inferred Trait: SENSITIVE_BARBELS for {}(id={})", drools.getRule().getName(), $species, $id);
 end
 
-rule "Trait: Infer Bottom Dweller"
+rule "Trait: Infer Sensitive Barbels Callichthyidae"
 when
-    $f : Fish($species : species)
-    $data : FishData(species == $species, ecology contains "benthic" 
-        || ecology contains "demersal" 
-        || ecology contains "benthopelagic"
-    )
-    not Trait(fishSpecies == $species, traitType == TraitType.BOTTOM_DWELLER)
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, family == "Callichthyidae")
+    not Trait(speciesId == $id, traitType == TraitType.SENSITIVE_BARBELS)
 then
-    insert(new Trait($species, TraitType.BOTTOM_DWELLER));
-    logger.trace("[{}] Inferred Trait: BOTTOM_DWELLER for {}", drools.getRule().getName(), $species);
+    insert(new Trait($id, TraitType.SENSITIVE_BARBELS));
+    logger.trace("[{}] Inferred Trait: SENSITIVE_BARBELS for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Bottom Dweller bethic"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, ecology contains "benthic")
+    not Trait(speciesId == $id, traitType == TraitType.BOTTOM_DWELLER)
+then
+    insert(new Trait($id, TraitType.BOTTOM_DWELLER));
+    logger.trace("[{}] Inferred Trait: BOTTOM_DWELLER for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Bottom Dweller demersal"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, ecology contains "demersal")
+    not Trait(speciesId == $id, traitType == TraitType.BOTTOM_DWELLER)
+then
+    insert(new Trait($id, TraitType.BOTTOM_DWELLER));
+    logger.trace("[{}] Inferred Trait: BOTTOM_DWELLER for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Surface Air Breather Obligate"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, airBreathing == "Obligate")
+    not Trait(speciesId == $id, traitType == TraitType.SURFACE_AIR_BREATHER)
+then
+    insert(new Trait($id, TraitType.SURFACE_AIR_BREATHER));
+    logger.trace("[{}] Inferred Trait: SURFACE_AIR_BREATHER for {}(id={})", drools.getRule().getName(), $species, $id);
+end
+
+rule "Trait: Infer Surface Air Breather Facultative"
+when
+    $f : Fish($species : species, $id : speciesId)
+    $data : FishData(speciesId == $id, airBreathing == "Facultative")
+    not Trait(speciesId == $id, traitType == TraitType.SURFACE_AIR_BREATHER)
+then
+    insert(new Trait($id, TraitType.SURFACE_AIR_BREATHER));
+    logger.trace("[{}] Inferred Trait: SURFACE_AIR_BREATHER for {}(id={})", drools.getRule().getName(), $species, $id);
 end

@@ -42,6 +42,11 @@
         <version>${drools.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.drools</groupId>
+      <artifactId>drools-templates</artifactId>
+      <version>${drools.version}</version>
+  </dependency>
+    <dependency>
         <groupId>org.projectlombok</groupId>
         <artifactId>lombok</artifactId>
         <version>1.18.46</version>

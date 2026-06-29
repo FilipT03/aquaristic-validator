@@ -1,6 +1,6 @@
 package com.github.filipt03.aquaristic_validator.model.types;
 
-public enum PenaltyType {
+public enum RiskType {
     PHYSICAL_INJURY,
     WATER_QUALITY,
     OVERCROWDING,
@@ -9,5 +9,11 @@ public enum PenaltyType {
     SOCIAL_STRESS,
     TERRITORIAL_CONFLICT,
     TOXIC_FREE_AMMONIA,
-    FLORA_DESTRUCTION
+    FLORA_DESTRUCTION,
+    WRONG_PH,
+    WRONG_TEMPERATURE,
+    UNDERSIZED_FILTER_VOLUME,
+    UNDERSIZED_FILTER_HEIGHT,
+    UNDERSIZED_HEATER_VOLUME,
 }
+    

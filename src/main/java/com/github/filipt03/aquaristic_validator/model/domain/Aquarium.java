@@ -9,6 +9,7 @@ public class Aquarium {
     private double volumeLiters;
     private double lengthCm;
     private double widthCm;
+    private double heightCm;
     private int ageInDays;
 
     private SubstrateType substrateType;
